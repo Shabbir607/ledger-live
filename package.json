@@ -9,14 +9,17 @@
     "email": "you@example.com"
   },
   "main": "electron/main.cjs",
-  "type": "module",
+  "type": "commonjs",
 "scripts": {
   "dev": "vite",
   "build:react": "vite build",
   "start": "electron-forge start",
+  
   "package": "npm run build:react && electron-forge package",
   "make": "npm run build:react && electron-forge make",
-  "make:win": "npm run build:react && electron-forge make --platform=win32"
+  "make:win": "npm run build:react && electron-forge make --platform=win32",
+  "clean": "rm -rf out dist"
+
 },
   "build": {
     "appId": "com.yourcompany.ledgerlivedesktop",

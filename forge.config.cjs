@@ -25,7 +25,7 @@ module.exports = {
         description: 'Ledger Live Desktop is a React-based desktop app powered by Electron and Vite.',
         exe: 'ledger-live-desktop.exe',
         setupExe: 'LedgerLiveDesktopSetup.exe',
-        setupIcon: './assets/icon.ico',
+        // setupIcon: './assets/icon.ico',
         loadingGif: './assets/loading.gif',
         noMsi: true
       },

@@ -26,7 +26,7 @@ module.exports = {
         exe: 'ledger-live-desktop.exe',
         setupExe: 'LedgerLiveDesktopSetup.exe',
         // setupIcon: './assets/icon.ico',
-        loadingGif: './assets/loading.gif',
+        // loadingGif: './assets/loading.gif',
         noMsi: true
       },
     },

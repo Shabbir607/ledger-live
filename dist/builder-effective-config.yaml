@@ -1,0 +1,23 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.yourcompany.ledgerlivedesktop
+productName: Ledger Live Desktop
+files:
+  - filter:
+      - dist/**/*
+      - electron/**/*
+      - package.json
+extraResources: []
+icon: assets/icon.png
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Finance
+  maintainer: Your Name <you@example.com>
+win:
+  target: nsis
+mac:
+  target: dmg
+electronVersion: 37.2.5

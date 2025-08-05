@@ -79,11 +79,15 @@ const Login = () => {
         <div className="absolute inset-0 flex items-center justify-center h-full w-full">
           <div className="relative h-full w-full">
             <div className="w-full h-full bg-black/20 rounded-lg backdrop-blur-sm border border-white/10 flex items-center justify-center">
-              <img
-                src="crypto-wallet-interface.png"
-                alt="Cryptocurrency Wallet Interface"
+              <video
                 className="w-full h-full object-cover rounded-lg"
-              />
+                autoPlay
+                muted
+                loop
+                playsInline
+              >
+                <source src="vid.mp4" type="video/mp4" />
+              </video>
             </div>
           </div>
         </div>

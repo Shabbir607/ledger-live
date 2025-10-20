@@ -5,9 +5,8 @@ appId: com.yourcompany.ledgerlivedesktop
 productName: Ledger Live Desktop
 files:
   - filter:
-      - dist/**/*
-      - electron/**/*
-      - package.json
+      - dist/**
+      - electron/**
 extraResources: []
 icon: assets/icon.png
 linux:
@@ -20,4 +19,4 @@ win:
   target: nsis
 mac:
   target: dmg
-electronVersion: 37.2.5
+electronVersion: 37.2.3

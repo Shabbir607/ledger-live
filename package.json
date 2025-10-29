@@ -9,7 +9,6 @@
     "email": "you@example.com"
   },
   "main": "electron/main.cjs",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "start": "electron electron/main.cjs",
@@ -30,7 +29,7 @@
       "electron/**"
     ],
     "extraResources": [],
-    "icon": "assets/icon.png",
+"icon": "assets/icon.ico",
     "linux": {
       "target": [
         "AppImage",
@@ -39,9 +38,11 @@
       "category": "Finance",
       "maintainer": "Your Name <you@example.com>"
     },
-    "win": {
-      "target": "nsis"
-    },
+  "win": {
+  "target": "nsis",
+  "icon": "assets/icon.ico"
+}
+,
     "mac": {
       "target": "dmg"
     }

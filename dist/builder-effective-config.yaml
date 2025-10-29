@@ -8,7 +8,7 @@ files:
       - dist/**
       - electron/**
 extraResources: []
-icon: assets/icon.png
+icon: assets/icon.ico
 linux:
   target:
     - AppImage
@@ -17,6 +17,7 @@ linux:
   maintainer: Your Name <you@example.com>
 win:
   target: nsis
+  icon: assets/icon.ico
 mac:
   target: dmg
 electronVersion: 37.2.3

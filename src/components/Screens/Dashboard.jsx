@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { Plus, RefreshCw, ShoppingCart, TrendingUp, AlertCircle } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  RefreshCw,
+  ShoppingCart,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+} from "lucide-react";
 import PortfolioChart from "../ui/PortfolioChart";
 import AccountCard from "../ui/AccountCard";
 import TransactionItem from "../ui/TransactionItem";
@@ -7,93 +14,191 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const BASE_URL = "https://ledger.laptopindubai.com/api";
-const COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3";
-
-// Add your CoinGecko API key here
-const COINGECKO_API_KEY = "CG-4NEe6FZ5QZSL8F88RjZQENGW";
 
 const Dashboard = () => {
-    const navigate = useNavigate(); 
+  const navigate = useNavigate();
+
+  // ────── STATE & HOOKS (must be at the top) ──────
   const [walletData, setWalletData] = useState(null);
-  const [transactions, setTransactions] = useState(null);
-  const [cryptoData, setCryptoData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch CoinGecko crypto data
-  const fetchCryptoData = async () => {
-    try {
-      const response = await fetch(
-        `${COINGECKO_BASE_URL}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=4&page=1&sparkline=false&price_change_percentage=24h&x_cg_demo_api_key=${COINGECKO_API_KEY}`
-      );
+  // ────── HELPERS ──────
+  const parseBalance = (str) => parseFloat(str.replace(/,/g, "")) || 0;
+// ────── PORTFOLIO HISTORY (transaction-based points) ──────
+const portfolioData = useMemo(() => {
+  if (!walletData?.wallets) return [];
 
-      if (!response.ok) {
-        throw new Error(`CoinGecko API error: ${response.status}`);
-      }
+  const allTxs = [];
+  const balances = {};
 
-      const data = await response.json();
-      setCryptoData(data);
-    } catch (err) {
-      console.error("Error fetching crypto data:", err);
-      // Continue with empty crypto data if CoinGecko fails
-      setCryptoData([]);
+  // Init balances to 0
+  walletData.wallets.forEach((w) => {
+    balances[w.wallet_type] = 0;
+  });
+
+  // Collect every transaction with proper timestamp
+  walletData.wallets.forEach((w) => {
+    w.transactions?.forEach((tx) => {
+      allTxs.push({
+        ...tx,
+        wallet_type: w.wallet_type,
+        timestamp: new Date(tx.created_at).getTime(),
+        amount: parseFloat(tx.amount.replace(/,/g, "")),
+        type: tx.type,
+      });
+    });
+  });
+
+  // No transactions → show current total balance as single point
+  if (allTxs.length === 0) {
+    const today = new Date().toISOString();
+    const total = parseBalance(walletData?.total_balance || "0");
+    return total > 0 ? [{ date: today, value: total }] : [];
+  }
+
+  // Sort by time (oldest first)
+  allTxs.sort((a, b) => a.timestamp - b.timestamp);
+
+  // Build data points - one for each transaction
+  const points = [];
+  const cur = { ...balances };
+
+  // Add starting point (balance = 0 before first transaction)
+  const firstTx = allTxs[0];
+  points.push({
+    date: new Date(firstTx.timestamp - 1000).toISOString(),
+    value: 0,
+    transaction: null
+  });
+
+  // Process each transaction
+  allTxs.forEach((tx) => {
+    // Update balance for this wallet type
+    if (tx.type === "credit") {
+      cur[tx.wallet_type] += tx.amount;
+    } else {
+      cur[tx.wallet_type] -= tx.amount;
     }
-  };
+    
+    // Calculate total across all wallets
+    const total = Object.values(cur).reduce((s, v) => s + v, 0);
+    
+    // Add point at this transaction time
+    points.push({
+      date: new Date(tx.timestamp).toISOString(),
+      value: Math.max(0, total),
+      transaction: {
+        type: tx.type,
+        amount: tx.amount,
+        wallet: tx.wallet_type,
+        description: tx.description
+      }
+    });
+  });
 
-  // Fetch wallet and transaction data
+  // Add current point if needed
+  const currentTotal = parseBalance(walletData?.total_balance || "0");
+  const lastPoint = points[points.length - 1];
+  
+  if (Math.abs(currentTotal - lastPoint.value) > 0.01) {
+    points.push({
+      date: new Date().toISOString(),
+      value: currentTotal,
+      transaction: null
+    });
+  }
+
+  console.log('Portfolio Data Points:', points.length);
+  console.log('Transactions visualized:', allTxs.length);
+
+  return points;
+}, [walletData]);
+  const change24h = useMemo(() => {
+    if (!walletData?.wallets) return 0;
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    let change = 0;
+
+    walletData.wallets.forEach((w) => {
+      w.transactions?.forEach((tx) => {
+        if (new Date(tx.created_at).getTime() > oneDayAgo) {
+          const amt = parseFloat(tx.amount);
+          change += tx.type === "credit" ? amt : -amt;
+        }
+      });
+    });
+    return change;
+  }, [walletData]);
+
+  // ────── RECENT TRANSACTIONS ──────
+  const recentTransactions = useMemo(() => {
+    if (!walletData?.wallets) return [];
+
+    const list = [];
+    walletData.wallets.forEach((w) => {
+      w.transactions?.slice(0, 4).forEach((tx) => {
+        list.push({
+          type: tx.type === "credit" ? "receive" : "send",
+          asset: w.wallet_type,
+          amount: parseFloat(tx.amount),
+          fiatValue: parseFloat(tx.amount),
+          status: "confirmed",
+          date: tx.created_at,
+          address: w.wallet_address,
+          hash: tx.transaction_hash,
+          description: tx.description,
+        });
+      });
+    });
+
+    return list.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [walletData]);
+
+  // ────── DERIVED VALUES ──────
+  const totalBalance = parseBalance(walletData?.total_balance || "0");
+
+  const accounts = useMemo(
+    () =>
+      walletData?.wallets?.map((w) => ({
+        coinName: `${w.wallet_type} Wallet`,
+        coinSymbol: w.wallet_type,
+        balance: parseBalance(w.balance),
+        fiatValue: parseBalance(w.balance),
+        change24h: 0,
+        coinIcon:
+          { BTC: "₿", ETH: "Ξ", USDT: "₮" }[w.wallet_type] || "●",
+      })) ?? [],
+    [walletData]
+  );
+
+  // ────── FETCH DATA ──────
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    
     try {
-      // Get auth token from localStorage
-      const authToken = localStorage.getItem('authToken');
-      
-      if (!authToken) {
-        throw new Error('Authentication token not found. Please log in.');
-      }
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Authentication token not found. Please log in.");
 
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      };
-
-      // Fetch wallet details
-      const walletResponse = await fetch(`${BASE_URL}/wallet`, {
-        method: 'GET',
-        headers
+      const res = await fetch(`${BASE_URL}/wallet`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      if (!walletResponse.ok) {
-        if (walletResponse.status === 401) {
-          throw new Error('Authentication failed. Please log in again.');
-        }
-        throw new Error(`Wallet API error: ${walletResponse.status}`);
+      if (!res.ok) {
+        if (res.status === 401)
+          throw new Error("Authentication failed. Please log in again.");
+        throw new Error(`API error: ${res.status}`);
       }
 
-      const walletResult = await walletResponse.json();
-
-      // Fetch transaction history
-      const transactionsResponse = await fetch(`${BASE_URL}/wallet/transactions`, {
-        method: 'GET',
-        headers
-      });
-
-      if (!transactionsResponse.ok) {
-        throw new Error(`Transactions API error: ${transactionsResponse.status}`);
-      }
-
-      const transactionsResult = await transactionsResponse.json();
-
-      setWalletData(walletResult.data);
-      setTransactions(transactionsResult.transactions);
-
-      // Fetch crypto data from CoinGecko
-      await fetchCryptoData();
-
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching data:", err);
+      const json = await res.json();
+      if (json.success && json.wallets) setWalletData(json);
+      else throw new Error(json.message || "Failed to load wallet data");
+    } catch (e) {
+      setError(e.message);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -103,78 +208,7 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  // Parse balance string to number
-  const parseBalance = (balanceStr) => {
-    return parseFloat(balanceStr.replace(/,/g, '')) || 0;
-  };
-
-  // Generate mock portfolio data based on current balance
-  const generatePortfolioData = (currentBalance) => {
-    const balance = parseBalance(currentBalance);
-    const data = [];
-    const dataPoints = 10;
-    
-    for (let i = 0; i < dataPoints; i++) {
-      const variance = (Math.random() - 0.5) * balance * 0.1;
-      data.push({
-        date: new Date(Date.now() - (dataPoints - i - 1) * 7 * 24 * 60 * 60 * 1000)
-          .toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        value: balance + variance
-      });
-    }
-    
-    return data;
-  };
-
-  // Calculate 24h change (mock calculation based on transaction history)
-  const calculate24hChange = (txs) => {
-    if (!txs || !txs.data || txs.data.length === 0) return 0;
-    
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const recentTxs = txs.data.filter(tx => 
-      new Date(tx.created_at) > oneDayAgo
-    );
-    
-    const totalChange = recentTxs.reduce((sum, tx) => {
-      const amount = parseFloat(tx.amount);
-      return sum + (tx.type === 'credit' ? amount : -amount);
-    }, 0);
-    
-    return totalChange;
-  };
-
-  // Transform API transactions to component format
-  const transformTransactions = (apiTransactions) => {
-    if (!apiTransactions || !apiTransactions.data) return [];
-    
-    return apiTransactions.data.slice(0, 4).map(tx => ({
-      type: tx.type === 'credit' ? 'receive' : 'send',
-      asset: 'USD',
-      amount: parseFloat(tx.amount),
-      fiatValue: parseFloat(tx.amount),
-      status: 'confirmed',
-      date: tx.created_at,
-      address: walletData?.wallet_address || 'N/A',
-      hash: tx.transaction_hash,
-      description: tx.description
-    }));
-  };
-
-  // Get crypto icon from CoinGecko data
-  const getCryptoIcon = (symbol) => {
-    const icons = {
-      'btc': '₿',
-      'eth': 'Ξ',
-      'ada': '₳',
-      'sol': '◎',
-      'bnb': 'Ƀ',
-      'xrp': '✕',
-      'doge': 'Ð',
-      'dot': '●'
-    };
-    return icons[symbol.toLowerCase()] || '◯';
-  };
-
+  // ────── EARLY RETURNS (AFTER ALL HOOKS) ──────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -191,9 +225,9 @@ const Dashboard = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center max-w-md mx-auto p-6 rounded-lg border border-red-500/50 bg-red-500/10">
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-white mb-2">Error Loading Data</h2>
+          <h2 className="text-xl font-semibold text-white mb-2">Error</h2>
           <p className="text-gray-400 mb-4">{error}</p>
-          <Button 
+          <Button
             onClick={fetchData}
             className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
           >
@@ -205,34 +239,7 @@ const Dashboard = () => {
     );
   }
 
-  const totalPortfolioValue = parseBalance(walletData?.balance || "0");
-  const portfolioChange24h = calculate24hChange(transactions);
-  const portfolioData = generatePortfolioData(walletData?.balance || "0");
-  const recentTransactions = transformTransactions(transactions);
-
-  // Create accounts from CoinGecko data + USD wallet
-  const accounts = [
-    // USD Wallet
-    {
-      coinName: "USD Wallet",
-      coinSymbol: "USD",
-      balance: totalPortfolioValue,
-      fiatValue: totalPortfolioValue,
-      change24h: portfolioChange24h > 0 ? ((portfolioChange24h / totalPortfolioValue) * 100) : 0,
-      coinIcon: "$",
-    },
-    // Crypto accounts from CoinGecko
-    ...cryptoData.map(crypto => ({
-      coinName: crypto.name,
-      coinSymbol: crypto.symbol.toUpperCase(),
-      balance: 0, // You can customize this to show owned amount
-      fiatValue: crypto.current_price,
-      change24h: crypto.price_change_percentage_24h || 0,
-      coinIcon: getCryptoIcon(crypto.symbol),
-      image: crypto.image, // Optional: use actual coin image
-    }))
-  ];
-
+  // ────── MAIN RENDER ──────
   return (
     <div className="space-y-6 w-full py-6 max-w-screen-2xl mx-auto px-4">
       {/* Header */}
@@ -242,14 +249,10 @@ const Dashboard = () => {
             Portfolio
           </h1>
           <p className="text-gray-400 text-sm sm:text-base">
-            Welcome back! Here's your portfolio overview.
-          </p>
-          <p className="text-cyan-400 text-xs mt-1">
-            Wallet: {walletData?.wallet_address}
+            Welcome back, {walletData?.user?.name || "User"}!
           </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           <Button
             variant="outline"
@@ -260,13 +263,13 @@ const Dashboard = () => {
             Sync
           </Button>
           <Button
-      variant="outline"
-      className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 flex-1 sm:flex-none"
-      onClick={() => navigate("/receive")}
-    >
-      <ShoppingCart className="w-4 h-4 mr-2" />
-      Add Funds
-    </Button>
+            variant="outline"
+            className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 flex-1 sm:flex-none"
+            onClick={() => navigate("/receive")}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Add Funds
+          </Button>
           <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 flex-1 sm:flex-none">
             <Plus className="w-4 h-4 mr-2" />
             New Transaction
@@ -278,29 +281,27 @@ const Dashboard = () => {
       <div className="overflow-x-auto rounded-lg">
         <PortfolioChart
           data={portfolioData}
-          totalValue={totalPortfolioValue}
-          change24h={(portfolioChange24h / totalPortfolioValue) * 100}
+          totalValue={totalBalance}
+          change24h={change24h}
+          changePercent={(change24h / totalBalance) * 100}
         />
       </div>
 
-      {/* Main Content Grid */}
+      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Account Cards */}
+        {/* Accounts */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-white">
-              Your Accounts
+              Your Wallets
             </h2>
-            <Button
-              variant="ghost"
-              className="text-cyan-400 hover:text-cyan-300 text-sm"
-            >
+            <Button variant="ghost" className="text-cyan-400 hover:text-cyan-300 text-sm">
               View All
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {accounts.map((account, index) => (
-              <AccountCard key={index} {...account} />
+            {accounts.map((a, i) => (
+              <AccountCard key={i} {...a} />
             ))}
           </div>
         </div>
@@ -311,21 +312,18 @@ const Dashboard = () => {
             <h2 className="text-lg sm:text-xl font-semibold text-white">
               Recent Activity
             </h2>
-            <Button
-              variant="ghost"
-              className="text-cyan-400 hover:text-cyan-300 text-sm"
-            >
+            <Button variant="ghost" className="text-cyan-400 hover:text-cyan-300 text-sm">
               View All
             </Button>
           </div>
           <div className="space-y-3">
             {recentTransactions.length > 0 ? (
-              recentTransactions.map((transaction, index) => (
+              recentTransactions.map((tx, i) => (
                 <div
-                  key={index}
+                  key={i}
                   className="rounded-lg border border-gray-800 bg-gray-900/30 p-4 overflow-hidden"
                 >
-                  <TransactionItem {...transaction} />
+                  <TransactionItem {...tx} />
                 </div>
               ))
             ) : (
@@ -337,15 +335,19 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-lg border border-gray-800 bg-gray-900/30">
           <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className={`w-5 h-5 ${portfolioChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`} />
+            {change24h >= 0 ? (
+              <TrendingUp className="w-5 h-5 text-green-400" />
+            ) : (
+              <TrendingDown className="w-5 h-5 text-red-400" />
+            )}
             <span className="text-sm text-gray-400">24h Change</span>
           </div>
-          <p className={`text-xl font-bold ${portfolioChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {portfolioChange24h >= 0 ? '+' : ''}${portfolioChange24h.toFixed(2)}
+          <p className={`text-xl font-bold ${change24h >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}
           </p>
         </div>
 
@@ -355,7 +357,10 @@ const Dashboard = () => {
             <span className="text-sm text-gray-400">Total Balance</span>
           </div>
           <p className="text-xl font-bold text-white">
-            ${totalPortfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${totalBalance.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </p>
         </div>
 
@@ -364,16 +369,21 @@ const Dashboard = () => {
             <div className="w-5 h-5 rounded-full bg-purple-500" />
             <span className="text-sm text-gray-400">Transactions</span>
           </div>
-          <p className="text-xl font-bold text-white">{transactions?.total || 0}</p>
+          <p className="text-xl font-bold text-white">
+            {walletData.wallets.reduce(
+              (s, w) => s + (w.transactions?.length || 0),
+              0
+            )}
+          </p>
         </div>
 
         <div className="p-4 rounded-lg border border-gray-800 bg-gray-900/30">
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-5 h-5 rounded-full bg-cyan-500" />
-            <span className="text-sm text-gray-400">Crypto Assets</span>
+            <span className="text-sm text-gray-400">Active Wallets</span>
           </div>
           <p className="text-xl font-bold text-cyan-400">
-            {cryptoData.length}
+            {walletData.wallets.length}
           </p>
         </div>
       </div>

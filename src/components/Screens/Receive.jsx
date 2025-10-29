@@ -14,43 +14,51 @@ import {
 import { Button } from "@/components/ui/button";
 
 const BASE_URL = "https://ledger.laptopindubai.com/api";
-
+// MOVE THIS BEFORE THE COMPONENT
 const availableAssets = [
   {
     id: 1,
-    coinName: "USD Wallet",
-    coinSymbol: "USD",
-    address: "Your Wallet Address",
-    coinIcon: "$",
-    color: "from-green-400 to-emerald-500",
-  },
-  {
-    id: 2,
     coinName: "Bitcoin",
     coinSymbol: "BTC",
-    address: "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+    walletType: "BTC",
     coinIcon: "₿",
     color: "from-orange-400 to-yellow-500",
   },
   {
-    id: 3,
+    id: 2,
     coinName: "Ethereum",
     coinSymbol: "ETH",
-    address: "0x742d35Cc6634C0532925a3b8D4C9db5C9b8D4C9d",
+    walletType: "ETH",
     coinIcon: "Ξ",
     color: "from-blue-400 to-purple-500",
   },
   {
+    id: 3,
+    coinName: "Tether",
+    coinSymbol: "USDT",
+    walletType: "USDT",
+    coinIcon: "₮",
+    color: "from-green-400 to-emerald-500",
+  },
+  {
     id: 4,
-    coinName: "Cardano",
-    coinSymbol: "ADA",
-    address:
-      "addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj0vs2qd4a6gtmvnsc74s5s",
-    coinIcon: "₳",
-    color: "from-blue-500 to-cyan-500",
+    coinName: "Binance Coin",
+    coinSymbol: "BNB",
+    walletType: "BNB",
+    coinIcon: "Ƀ",
+    color: "from-yellow-400 to-orange-500",
+  },
+  {
+    id: 5,
+    coinName: "Solana",
+    coinSymbol: "SOL",
+    walletType: "SOL",
+    coinIcon: "◎",
+    color: "from-purple-400 to-pink-500",
   },
 ];
 
+// NOW START THE COMPONENT
 const Receive = () => {
   const [selectedAsset, setSelectedAsset] = useState(availableAssets[0]);
   const [showAssetDropdown, setShowAssetDropdown] = useState(false);
@@ -60,133 +68,250 @@ const Receive = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [walletExists, setWalletExists] = useState(false);
+const [creatingWallet, setCreatingWallet] = useState(false);
+const [allWallets, setAllWallets] = useState([]); // Store all wallets from API
+const [fetchingWallets, setFetchingWallets] = useState(true); // Initial load state
+useEffect(() => {
+  fetchAllWallets();
+}, []);
 
-  useEffect(() => {
-    fetchWalletAddress();
-  }, []);
-
-  const fetchWalletAddress = async () => {
-    try {
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        setError('Authentication token not found. Please log in.');
-        return;
-      }
-
-      const response = await fetch(`${BASE_URL}/wallet`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch wallet address');
-      }
-
-      const result = await response.json();
-      if (result.success && result.data.wallet_address) {
-        setWalletAddress(result.data.wallet_address);
-      }
-    } catch (err) {
-      console.error('Error fetching wallet address:', err);
-      setError(err.message);
+useEffect(() => {
+  if (selectedAsset && allWallets.length > 0) {
+    const wallet = allWallets.find(
+      w => w.wallet_type === selectedAsset.walletType
+    );
+    
+    if (wallet) {
+      setWalletAddress(wallet.wallet_address);
+      setWalletExists(true);
+    } else {
+      // Wallet doesn't exist, create it
+      setWalletAddress('');
+      setWalletExists(false);
+      createWallet(selectedAsset.walletType);
     }
-  };
+  }
+}, [selectedAsset, allWallets]);
 
-  const handleAddFunds = async () => {
-    if (!requestAmount || parseFloat(requestAmount) <= 0) {
-      setError('Please enter a valid amount');
+const createWallet = async (walletType) => {
+  setCreatingWallet(true);
+  setError(null);
+
+  try {
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      throw new Error('Authentication token not found. Please log in.');
+    }
+
+    const response = await fetch(`${BASE_URL}/wallet/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        wallet_type: walletType,
+        amount: 0.005
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create wallet');
+    }
+
+    const result = await response.json();
+    
+    if (result.success && result.wallets) {
+      // Update all wallets
+      setAllWallets(result.wallets);
+      
+      // Find the newly created wallet
+      const newWallet = result.wallets.find(w => w.wallet_type === walletType);
+      if (newWallet) {
+        setWalletAddress(newWallet.wallet_address);
+        setWalletExists(true);
+        setSuccess(`${walletType} wallet created successfully!`);
+        setTimeout(() => setSuccess(null), 3000);
+      }
+    }
+  } catch (err) {
+    console.error('Error creating wallet:', err);
+    setError(err.message);
+  } finally {
+    setCreatingWallet(false);
+  }
+};
+const fetchAllWallets = async () => {
+  setFetchingWallets(true);
+  setError(null);
+  
+  try {
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      setError('Authentication token not found. Please log in.');
+      setFetchingWallets(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        throw new Error('Authentication token not found. Please log in.');
+    const response = await fetch(`${BASE_URL}/wallet`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
       }
+    });
 
-      const response = await fetch(`${BASE_URL}/wallet/add-funds`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          amount: parseFloat(requestAmount)
-        })
-      });
+    if (!response.ok) {
+      throw new Error('Failed to fetch wallets');
+    }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add funds');
-      }
-
-      const result = await response.json();
+    const result = await response.json();
+    
+    if (result.success && result.wallets) {
+      // Store all wallets
+      setAllWallets(result.wallets);
       
-      if (result.success) {
-        setSuccess(`Successfully added ${requestAmount} ${selectedAsset.coinSymbol} to your wallet!`);
-        setRequestAmount('');
-        
-        setTimeout(() => {
-          fetchWalletAddress();
-          setSuccess(null);
-        }, 2000);
+      // Check if selected asset wallet exists
+      const selectedWallet = result.wallets.find(
+        wallet => wallet.wallet_type === selectedAsset.walletType
+      );
+      
+      if (selectedWallet) {
+        setWalletAddress(selectedWallet.wallet_address);
+        setWalletExists(true);
+      } else {
+        // Wallet doesn't exist, create it
+        setWalletAddress('');
+        setWalletExists(false);
+        await createWallet(selectedAsset.walletType);
       }
-    } catch (err) {
-      console.error('Error adding funds:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    console.error('Error fetching wallets:', err);
+    setError(err.message);
+  } finally {
+    setFetchingWallets(false);
+  }
+};
+const handleAddFunds = async () => {
+  if (!requestAmount || parseFloat(requestAmount) <= 0) {
+    setError('Please enter a valid amount');
+    return;
+  }
 
-  const handleCopyAddress = async () => {
-    const addressToCopy = selectedAsset.id === 1 ? walletAddress : selectedAsset.address;
-    try {
-      await navigator.clipboard.writeText(addressToCopy);
-      setCopiedAddress(true);
-      setTimeout(() => setCopiedAddress(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy address:", err);
+  setLoading(true);
+  setError(null);
+  setSuccess(null);
+
+  try {
+    const authToken = localStorage.getItem('authToken');
+    if (!authToken) {
+      throw new Error('Authentication token not found. Please log in.');
     }
-  };
+
+    const response = await fetch(`${BASE_URL}/wallet/add-funds`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify({
+        wallet_type: selectedAsset.walletType, // Send wallet type, not address
+        amount: parseFloat(requestAmount)
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to add funds');
+    }
+
+    const result = await response.json();
+    
+    if (result.success) {
+      setSuccess(`Successfully added ${requestAmount} ${selectedAsset.coinSymbol} to your wallet!`);
+      setRequestAmount('');
+      
+      // Refresh wallets after 2 seconds
+      setTimeout(() => {
+        fetchAllWallets();
+        setSuccess(null);
+      }, 2000);
+    }
+  } catch (err) {
+    console.error('Error adding funds:', err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleCopyAddress = async () => {
+  const addressToCopy = walletAddress; // Simplified
+  try {
+    await navigator.clipboard.writeText(addressToCopy);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  } catch (err) {
+    console.error("Failed to copy address:", err);
+  }
+};
+
+const handleShareAddress = () => {
+  const addressToShare = walletAddress; // Simplified
+  if (navigator.share) {
+    navigator.share({
+      title: `${selectedAsset.coinName} Address`,
+      text: `Send ${selectedAsset.coinSymbol} to: ${addressToShare}`
+    }).catch(err => console.log('Error sharing:', err));
+  } else {
+    console.log("Sharing address:", addressToShare);
+  }
+};
 
   const handleGenerateNewAddress = () => {
     console.log("Generating new address for", selectedAsset.coinSymbol);
   };
 
-  const handleShareAddress = () => {
-    const addressToShare = selectedAsset.id === 1 ? walletAddress : selectedAsset.address;
-    if (navigator.share) {
-      navigator.share({
-        title: `${selectedAsset.coinName} Address`,
-        text: `Send ${selectedAsset.coinSymbol} to: ${addressToShare}`
-      }).catch(err => console.log('Error sharing:', err));
-    } else {
-      console.log("Sharing address:", addressToShare);
-    }
-  };
-
-  const QRCodePlaceholder = () => {
-    const displayAddress = selectedAsset.id === 1 ? walletAddress : selectedAsset.address;
+const QRCodePlaceholder = () => {
+  if (fetchingWallets) {
     return (
       <div className="w-64 h-64 bg-white rounded-lg flex items-center justify-center mx-auto">
         <div className="text-center p-4">
-          <QrCode className="w-16 h-16 text-gray-800 mx-auto mb-2" />
-          <p className="text-gray-600 text-sm font-semibold">{selectedAsset.coinSymbol}</p>
-          <p className="text-gray-500 text-xs mt-1 break-all">{displayAddress}</p>
+          <Loader2 className="w-16 h-16 text-gray-800 mx-auto mb-2 animate-spin" />
+          <p className="text-gray-600 text-sm font-semibold">Loading Wallets...</p>
         </div>
       </div>
     );
-  };
-
-  const displayAddress = selectedAsset.id === 1 ? walletAddress : selectedAsset.address;
+  }
+  
+  if (creatingWallet) {
+    return (
+      <div className="w-64 h-64 bg-white rounded-lg flex items-center justify-center mx-auto">
+        <div className="text-center p-4">
+          <Loader2 className="w-16 h-16 text-gray-800 mx-auto mb-2 animate-spin" />
+          <p className="text-gray-600 text-sm font-semibold">Creating Wallet...</p>
+          <p className="text-gray-500 text-xs mt-1">{selectedAsset.coinSymbol}</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="w-64 h-64 bg-white rounded-lg flex items-center justify-center mx-auto">
+      <div className="text-center p-4">
+        <QrCode className="w-16 h-16 text-gray-800 mx-auto mb-2" />
+        <p className="text-gray-600 text-sm font-semibold">{selectedAsset.coinSymbol}</p>
+        <p className="text-gray-500 text-xs mt-1 break-all">
+          {walletAddress || 'No address available'}
+        </p>
+      </div>
+    </div>
+  );
+};
+const displayAddress = walletAddress || 'Loading...';
 
   return (
     <div className="max-w-2xl w-full mx-auto space-y-6 px-4 sm:px-6">
@@ -260,25 +385,15 @@ const Receive = () => {
         </div>
       </div>
 
-      {/* Success/Error Messages */}
-      {success && (
-        <div className="p-4 rounded-lg border border-green-500/50 bg-green-500/10">
-          <div className="flex items-center gap-2">
-            <Check className="w-5 h-5 text-green-400" />
-            <p className="text-green-400">{success}</p>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="p-4 rounded-lg border border-red-500/50 bg-red-500/10">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <p className="text-red-400">{error}</p>
-          </div>
-        </div>
-      )}
-
+   
+{creatingWallet && (
+  <div className="p-4 rounded-lg border border-cyan-500/50 bg-cyan-500/10">
+    <div className="flex items-center gap-2">
+      <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+      <p className="text-cyan-400">Creating {selectedAsset.coinSymbol} wallet...</p>
+    </div>
+  </div>
+)}
       {/* Asset Selection */}
       <div className="p-4 sm:p-6 rounded-xl border border-gray-800 bg-gray-900/50">
         <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -350,7 +465,7 @@ const Receive = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleCopyAddress}
-              disabled={!displayAddress}
+  disabled={!walletAddress || creatingWallet || fetchingWallets}
               className="flex-1 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border border-cyan-500/30"
             >
               {copiedAddress ? (
@@ -367,7 +482,7 @@ const Receive = () => {
             </Button>
             <Button
               onClick={handleShareAddress}
-              disabled={!displayAddress}
+  disabled={!displayAddress || creatingWallet}
               variant="outline"
               className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800"
             >
@@ -450,8 +565,14 @@ const Receive = () => {
       <div className="flex flex-col sm:flex-row gap-3">
         <Button 
           onClick={handleAddFunds}
-          disabled={loading || !requestAmount || parseFloat(requestAmount) <= 0}
-          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50"
+disabled={
+    loading || 
+    !requestAmount || 
+    parseFloat(requestAmount) <= 0 || 
+    creatingWallet || 
+    !walletExists ||
+    fetchingWallets
+  }          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50"
         >
           {loading ? (
             <>

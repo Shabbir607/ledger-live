@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User, 
   Shield, 
@@ -21,13 +21,25 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const Settings = () => {
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [hideBalances, setHideBalances] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
+const [darkMode, setDarkMode] = useState(() => {
+  return localStorage.getItem("theme") === "dark";
+});
+
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+  }
+}, [darkMode]);
 
   const languages = [
     { code: 'en', name: 'English' },

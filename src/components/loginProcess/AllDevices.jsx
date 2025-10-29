@@ -14,25 +14,27 @@ const Button = ({ children, className, ...props }) => (
 const devices = [
   { name: "Ledger Stax", image: assets.img1, link: "/all-devices/ledger-stax" },
   { name: "Ledger Flex", image: assets.img2, link: "/all-devices/ledger-flex" },
-  {
-    name: "Ledger Nano S",
-    image: assets.img3,
-    link: "/all-devices/ledger-nano-s",
-  },
-  {
-    name: "Ledger Nano S Plus",
-    image: assets.img4,
-    link: "/all-devices/ledger-nano-s-plus",
-  },
-  {
-    name: "Ledger Nano X",
-    image: assets.img5,
-    link: "/all-devices/ledger-nano-x",
-  },
+  { name: "Ledger Nano S", image: assets.img3, link: "/all-devices/ledger-nano-s" },
+  { name: "Ledger Nano S Plus", image: assets.img4, link: "/all-devices/ledger-nano-s-plus" },
+  { name: "Ledger Nano X", image: assets.img5, link: "/all-devices/ledger-nano-x" },
 ];
 
 export default function AllDevices() {
   const navigate = useNavigate();
+
+  const handleSelectDevice = (device) => {
+    try {
+      // Always overwrite the previously saved device
+      localStorage.removeItem("selectedDevice");
+      localStorage.setItem("selectedDevice", JSON.stringify(device));
+
+      // Navigate to selected device page
+      navigate(device.link);
+    } catch (error) {
+      console.error("Error saving selected device:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -87,7 +89,7 @@ export default function AllDevices() {
               <div className="group-hover:block hidden">
                 <Button
                   className="bg-white text-black hover:bg-gray-200 px-8 py-2 rounded-full font-medium cursor-pointer"
-                  onClick={() => navigate(device.link)}
+                  onClick={() => handleSelectDevice(device)}
                 >
                   Select
                 </Button>

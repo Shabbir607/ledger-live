@@ -13,8 +13,12 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import { useDarkMode } from '../DarkModeContext';
+import { cn } from '@/lib/utils';
 
 const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
+  const { darkMode } = useDarkMode();
+  
   // ──────────────────────────────────────────────────────────────────────
   // STATE
   // ──────────────────────────────────────────────────────────────────────
@@ -177,51 +181,6 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
   };
 
   // ──────────────────────────────────────────────────────────────────────
-  // DELETE WALLET (Uninstall)
-  // ──────────────────────────────────────────────────────────────────────
-  // const deleteWallet = async (walletType) => {
-  //   if (!confirm(`Are you sure you want to delete ${walletType} wallet?`)) {
-  //     return false;
-  //   }
-
-  //   const authToken = localStorage.getItem("authToken");
-  //   if (!authToken) {
-  //     setError("Authentication required.");
-  //     return false;
-  //   }
-
-  //   setUninstallingApps((s) => new Set([...s, walletType]));
-
-  //   try {
-  //     const res = await fetch(`${baseUrl}/wallet/${walletType}`, {
-  //       method: "DELETE",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${authToken}`,
-  //       },
-  //     });
-
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       throw new Error(errorData.message || `HTTP ${res.status}`);
-  //     }
-
-  //     // Refresh the wallet list
-  //     await fetchWallets();
-  //     return true;
-  //   } catch (err) {
-  //     setError(err.message);
-  //     return false;
-  //   } finally {
-  //     setUninstallingApps((s) => {
-  //       const ns = new Set(s);
-  //       ns.delete(walletType);
-  //       return ns;
-  //     });
-  //   }
-  // };
-
-  // ──────────────────────────────────────────────────────────────────────
   // HANDLE INSTALL / UNINSTALL
   // ──────────────────────────────────────────────────────────────────────
   const handleInstallWallet = async (walletType) => {
@@ -230,13 +189,6 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
       alert("Failed to create wallet. Please try again.");
     }
   };
-
-  // const handleUninstallWallet = async (walletType) => {
-  //   const success = await deleteWallet(walletType);
-  //   if (!success) {
-  //     alert("Failed to delete wallet. Please try again.");
-  //   }
-  // };
 
   // ──────────────────────────────────────────────────────────────────────
   // FILTERING
@@ -261,7 +213,12 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
     const uninstalling = uninstallingApps.has(app.id);
 
     return (
-      <div className="p-4 rounded-lg border border-gray-800 bg-gray-900/30 hover:bg-gray-800/50 transition-all w-full">
+      <div className={cn(
+        "p-4 rounded-lg border transition-all w-full",
+        darkMode 
+          ? "border-gray-800 bg-gray-900/30 hover:bg-gray-800/50" 
+          : "border-gray-200 bg-white hover:bg-gray-50"
+      )}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
             <div
@@ -271,10 +228,16 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
             </div>
 
             <div>
-              <h3 className="font-semibold text-white text-base sm:text-lg">
+              <h3 className={cn(
+                "font-semibold text-base sm:text-lg",
+                darkMode ? "text-white" : "text-gray-900"
+              )}>
                 {app.name} Wallet
               </h3>
-              <div className="flex flex-wrap items-center text-sm text-gray-400 gap-x-2 gap-y-1">
+              <div className={cn(
+                "flex flex-wrap items-center text-sm gap-x-2 gap-y-1",
+                darkMode ? "text-gray-400" : "text-gray-600"
+              )}>
                 <span>{app.symbol}</span>
                 <span className="hidden sm:inline">•</span>
                 <span>v{app.version}</span>
@@ -305,8 +268,6 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
                 <span>Deleting</span>
               </div>
             )}
-
-          
           </div>
         </div>
       </div>
@@ -317,15 +278,24 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
   // RENDER
   // ──────────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen py-8">
+    <div className={cn(
+      "min-h-screen py-8",
+      darkMode ? "bg-gray-900" : "bg-gray-50"
+    )}>
       <div className="space-y-6 px-4 sm:px-6 w-full max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+            <h1 className={cn(
+              "text-2xl sm:text-3xl font-bold mb-1",
+              darkMode ? "text-white" : "text-gray-900"
+            )}>
               Wallet Manager
             </h1>
-            <p className="text-gray-400 text-sm sm:text-base">
+            <p className={cn(
+              "text-sm sm:text-base",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
               Create and manage your cryptocurrency wallets
             </p>
           </div>
@@ -333,22 +303,49 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
 
         {/* Loading */}
         {loading && (
-          <div className="p-6 rounded-xl border border-gray-800 bg-gray-900/50 text-center">
+          <div className={cn(
+            "p-6 rounded-xl border text-center",
+            darkMode 
+              ? "border-gray-800 bg-gray-900/50" 
+              : "border-gray-200 bg-white"
+          )}>
             <Clock className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-2" />
-            <p className="text-gray-400">Loading wallets…</p>
+            <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+              Loading wallets…
+            </p>
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3">
+          <div className={cn(
+            "p-4 rounded-lg border flex items-start gap-3",
+            darkMode 
+              ? "bg-red-500/10 border-red-500/30" 
+              : "bg-red-50 border-red-200"
+          )}>
             <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-red-400 font-medium">Error</p>
-              <p className="text-red-300 text-sm">{error}</p>
+              <p className={cn(
+                "font-medium",
+                darkMode ? "text-red-400" : "text-red-600"
+              )}>
+                Error
+              </p>
+              <p className={cn(
+                "text-sm",
+                darkMode ? "text-red-300" : "text-red-500"
+              )}>
+                {error}
+              </p>
               <button
                 onClick={fetchWallets}
-                className="mt-2 text-sm text-red-400 hover:text-red-300"
+                className={cn(
+                  "mt-2 text-sm",
+                  darkMode 
+                    ? "text-red-400 hover:text-red-300" 
+                    : "text-red-600 hover:text-red-700"
+                )}
               >
                 Retry
               </button>
@@ -357,7 +354,12 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
         )}
 
         {/* Device Status */}
-        <div className="p-4 sm:p-6 rounded-xl border border-gray-800 bg-gray-900/50 space-y-4">
+        <div className={cn(
+          "p-4 sm:p-6 rounded-xl border space-y-4",
+          darkMode 
+            ? "border-gray-800 bg-gray-900/50" 
+            : "border-gray-200 bg-white shadow-sm"
+        )}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               {selectedDevice?.image ? (
@@ -372,10 +374,16 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
                 </div>
               )}
               <div>
-                <h3 className="font-semibold text-white">
+                <h3 className={cn(
+                  "font-semibold",
+                  darkMode ? "text-white" : "text-gray-900"
+                )}>
                   {selectedDevice?.name || "Ledger Device"}
                 </h3>
-                <p className="text-sm text-gray-400">
+                <p className={cn(
+                  "text-sm",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   Firmware v2.2.1 • Connected via USB
                 </p>
               </div>
@@ -388,18 +396,26 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Storage Usage</span>
-              <span className="text-white">
+              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                Storage Usage
+              </span>
+              <span className={darkMode ? "text-white" : "text-gray-900"}>
                 {usedStorage} KB / {totalStorage} KB
               </span>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className={cn(
+              "w-full rounded-full h-2",
+              darkMode ? "bg-gray-700" : "bg-gray-200"
+            )}>
               <div
                 className="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${storagePercentage}%` }}
               />
             </div>
-            <div className="flex items-center space-x-2 text-xs text-gray-400">
+            <div className={cn(
+              "flex items-center space-x-2 text-xs",
+              darkMode ? "text-gray-400" : "text-gray-600"
+            )}>
               <HardDrive className="w-3 h-3" />
               <span>{(100 - storagePercentage).toFixed(1)}% available</span>
             </div>
@@ -410,39 +426,52 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
         <div className="flex flex-col lg:flex-row justify-between gap-4 items-start lg:items-center">
           <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className={cn(
+                "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4",
+                darkMode ? "text-gray-400" : "text-gray-500"
+              )} />
               <input
                 type="text"
                 placeholder="Search wallets..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                className={cn(
+                  "w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500",
+                  darkMode 
+                    ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400" 
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+                )}
               />
             </div>
-            {/* <button className="px-4 py-2 rounded-lg border border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button> */}
           </div>
 
-          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1 w-full sm:w-auto">
+          <div className={cn(
+            "flex space-x-1 rounded-lg p-1 w-full sm:w-auto",
+            darkMode ? "bg-gray-800" : "bg-gray-100"
+          )}>
             <button
               onClick={() => setSelectedTab("installed")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all w-full sm:w-auto ${
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-all w-full sm:w-auto",
                 selectedTab === "installed"
                   ? "bg-cyan-500 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
-              }`}
+                  : darkMode
+                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+              )}
             >
               Active ({installedWallets.length})
             </button>
             <button
               onClick={() => setSelectedTab("available")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all w-full sm:w-auto ${
+              className={cn(
+                "px-4 py-2 rounded-md text-sm font-medium transition-all w-full sm:w-auto",
                 selectedTab === "available"
                   ? "bg-cyan-500 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
-              }`}
+                  : darkMode
+                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+              )}
             >
               Create New ({availableWallets.length})
             </button>
@@ -453,7 +482,12 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
         <div className="space-y-4">
           {selectedTab === "installed" && (
             <>
-              <h2 className="text-xl font-semibold text-white">Active Wallets</h2>
+              <h2 className={cn(
+                "text-xl font-semibold",
+                darkMode ? "text-white" : "text-gray-900"
+              )}>
+                Active Wallets
+              </h2>
               {filteredInstalled.length ? (
                 <div className="space-y-3">
                   {filteredInstalled.map((w) => (
@@ -461,7 +495,10 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-400">
+                <div className={cn(
+                  "text-center py-12",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   No active wallets. Create one to get started.
                 </div>
               )}
@@ -470,8 +507,16 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
 
           {selectedTab === "available" && (
             <>
-              <h2 className="text-xl font-semibold text-white">Create New Wallet</h2>
-              <p className="text-gray-400 text-sm">
+              <h2 className={cn(
+                "text-xl font-semibold",
+                darkMode ? "text-white" : "text-gray-900"
+              )}>
+                Create New Wallet
+              </h2>
+              <p className={cn(
+                "text-sm",
+                darkMode ? "text-gray-400" : "text-gray-600"
+              )}>
                 Select a wallet type to create a new wallet address
               </p>
               {filteredAvailable.length ? (
@@ -481,7 +526,10 @@ const Manager = ({ baseUrl = "https://ledger.laptopindubai.com/api" }) => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-400">
+                <div className={cn(
+                  "text-center py-12",
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                )}>
                   All available wallet types are already created.
                 </div>
               )}

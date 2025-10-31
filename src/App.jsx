@@ -44,6 +44,7 @@ import Recover_24 from "./components/loginProcess/allDevices_subsection/nano-s-p
 import ForgetPasswordLedger from "./components/popups/ForgetPasswordLedger";
 import Recover_24_Nano_X from "./components/loginProcess/allDevices_subsection/nano-x-subsection/Recover_24_NanoX";
 import LedgerRegister from "./components/popups/LedgerRegister";
+import { DarkModeProvider } from "./components/DarkModeContext";
 
 function AppContent() {
   const location = useLocation();
@@ -62,6 +63,8 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-gray-950 dark">
+          <DarkModeProvider>
+
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login1 />} />
@@ -225,6 +228,8 @@ function AppContent() {
         {/* Catch all - redirect to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </    DarkModeProvider>
+
     </div>
   );
 }

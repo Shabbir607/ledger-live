@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useDarkMode } from '../DarkModeContext';
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -39,137 +40,140 @@ const PortfolioChart = ({
   changePercent,
   className,
 }) => {
-const [selectedRange, setSelectedRange] = useState('ALL'); // Changed from '1M'
-const filteredData = useMemo(() => {
-  if (!data?.length) return [];
-
-  const now = Date.now();
-  let cutoff;
+  const { darkMode } = useDarkMode();
+  const [selectedRange, setSelectedRange] = useState('ALL');
   
-  // Special handling for 1D - show today's data
-  if (selectedRange === '1D') {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    cutoff = today.getTime();
-  } else {
-    cutoff = selectedRange === 'ALL' ? 0 : now - rangeMs[selectedRange];
-  }
+  const filteredData = useMemo(() => {
+    if (!data?.length) return [];
 
-  // Filter by date range first
-  const filtered = data.filter((p) => {
-    const t = new Date(p.date).getTime();
-    return !Number.isNaN(t) && t >= cutoff;
-  });
+    const now = Date.now();
+    let cutoff;
+    
+    // Special handling for 1D - show today's data
+    if (selectedRange === '1D') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      cutoff = today.getTime();
+    } else {
+      cutoff = selectedRange === 'ALL' ? 0 : now - rangeMs[selectedRange];
+    }
 
-  if (!filtered.length) return [];
+    // Filter by date range first
+    const filtered = data.filter((p) => {
+      const t = new Date(p.date).getTime();
+      return !Number.isNaN(t) && t >= cutoff;
+    });
 
-  // For ALL view, show actual transaction points (no aggregation)
-  if (selectedRange === 'ALL') {
+    if (!filtered.length) return [];
+
+    // For ALL view, show actual transaction points (no aggregation)
+    if (selectedRange === 'ALL') {
+      return filtered;
+    }
+
+    // For 1D - hourly aggregation
+    if (selectedRange === '1D') {
+      const hourlyData = new Map();
+      filtered.forEach((point) => {
+        const date = new Date(point.date);
+        const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
+
+        if (!hourlyData.has(hourKey)) {
+          hourlyData.set(hourKey, {
+            date: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate(),
+              date.getHours()
+            ).toISOString(),
+            value: point.value,
+          });
+        } else {
+          // Use latest value in the hour
+          hourlyData.get(hourKey).value = point.value;
+        }
+      });
+      return Array.from(hourlyData.values()).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+    }
+
+    // For 1W - daily aggregation (take last value of each day)
+    if (selectedRange === '1W') {
+      const dailyData = new Map();
+      filtered.forEach((point) => {
+        const date = new Date(point.date);
+        const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+        if (!dailyData.has(dayKey)) {
+          dailyData.set(dayKey, {
+            date: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              date.getDate()
+            ).toISOString(),
+            value: point.value,
+          });
+        } else {
+          // Use latest value in the day
+          dailyData.get(dayKey).value = point.value;
+        }
+      });
+      return Array.from(dailyData.values()).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+    }
+
+    // For 1M - weekly aggregation
+    if (selectedRange === '1M') {
+      const weeklyData = new Map();
+      filtered.forEach((point) => {
+        const date = new Date(point.date);
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay() + 1); // Monday
+        weekStart.setHours(0, 0, 0, 0);
+        const weekKey = weekStart.toISOString().split('T')[0];
+
+        if (!weeklyData.has(weekKey)) {
+          weeklyData.set(weekKey, {
+            date: weekKey,
+            value: point.value,
+          });
+        } else {
+          // Use latest value in week
+          weeklyData.get(weekKey).value = point.value;
+        }
+      });
+      return Array.from(weeklyData.values()).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+    }
+
+    // For 3M, 1Y - monthly aggregation
+    if (selectedRange === '3M' || selectedRange === '1Y') {
+      const monthlyData = new Map();
+      filtered.forEach((point) => {
+        const date = new Date(point.date);
+        const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+
+        if (!monthlyData.has(monthKey)) {
+          monthlyData.set(monthKey, {
+            date: new Date(date.getFullYear(), date.getMonth(), 1).toISOString(),
+            value: point.value,
+          });
+        } else {
+          // Use latest value in month
+          monthlyData.get(monthKey).value = point.value;
+        }
+      });
+      return Array.from(monthlyData.values()).sort(
+        (a, b) => new Date(a.date) - new Date(b.date)
+      );
+    }
+
     return filtered;
-  }
+  }, [data, selectedRange]);
 
-  // For 1D - hourly aggregation
-  if (selectedRange === '1D') {
-    const hourlyData = new Map();
-    filtered.forEach((point) => {
-      const date = new Date(point.date);
-      const hourKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}-${date.getHours()}`;
-
-      if (!hourlyData.has(hourKey)) {
-        hourlyData.set(hourKey, {
-          date: new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            date.getHours()
-          ).toISOString(),
-          value: point.value,
-        });
-      } else {
-        // Use latest value in the hour
-        hourlyData.get(hourKey).value = point.value;
-      }
-    });
-    return Array.from(hourlyData.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
-  }
-
-  // For 1W - daily aggregation (take last value of each day)
-  if (selectedRange === '1W') {
-    const dailyData = new Map();
-    filtered.forEach((point) => {
-      const date = new Date(point.date);
-      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-
-      if (!dailyData.has(dayKey)) {
-        dailyData.set(dayKey, {
-          date: new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate()
-          ).toISOString(),
-          value: point.value,
-        });
-      } else {
-        // Use latest value in the day
-        dailyData.get(dayKey).value = point.value;
-      }
-    });
-    return Array.from(dailyData.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
-  }
-
-  // For 1M - weekly aggregation
-  if (selectedRange === '1M') {
-    const weeklyData = new Map();
-    filtered.forEach((point) => {
-      const date = new Date(point.date);
-      const weekStart = new Date(date);
-      weekStart.setDate(date.getDate() - date.getDay() + 1); // Monday
-      weekStart.setHours(0, 0, 0, 0);
-      const weekKey = weekStart.toISOString().split('T')[0];
-
-      if (!weeklyData.has(weekKey)) {
-        weeklyData.set(weekKey, {
-          date: weekKey,
-          value: point.value,
-        });
-      } else {
-        // Use latest value in week
-        weeklyData.get(weekKey).value = point.value;
-      }
-    });
-    return Array.from(weeklyData.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
-  }
-
-  // For 3M, 1Y - monthly aggregation
-  if (selectedRange === '3M' || selectedRange === '1Y') {
-    const monthlyData = new Map();
-    filtered.forEach((point) => {
-      const date = new Date(point.date);
-      const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-
-      if (!monthlyData.has(monthKey)) {
-        monthlyData.set(monthKey, {
-          date: new Date(date.getFullYear(), date.getMonth(), 1).toISOString(),
-          value: point.value,
-        });
-      } else {
-        // Use latest value in month
-        monthlyData.get(monthKey).value = point.value;
-      }
-    });
-    return Array.from(monthlyData.values()).sort(
-      (a, b) => new Date(a.date) - new Date(b.date)
-    );
-  }
-
-  return filtered;
-}, [data, selectedRange]);
   const isPositive = change24h >= 0;
   const displayPercent =
     changePercent ?? (totalValue ? (change24h / totalValue) * 100 : 0);
@@ -213,101 +217,111 @@ const filteredData = useMemo(() => {
   };
   /* ----------------------------------------------------------------------- */
 
-const CustomTooltip = ({ active, payload, label }) => {
-  if (active && payload?.length) {
-    const d = new Date(label);
-    const dataPoint = payload[0].payload;
-    let dateLabel = "";
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload?.length) {
+      const d = new Date(label);
+      const dataPoint = payload[0].payload;
+      let dateLabel = "";
 
-    if (selectedRange === "1D") {
-      dateLabel = d.toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } else if (selectedRange === "1W") {
-      dateLabel = d.toLocaleDateString("en-US", {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      });
-    } else if (selectedRange === "1M") {
-      const weekStart = new Date(d);
-      weekStart.setDate(d.getDate() - d.getDay() + 1);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      dateLabel = `${weekStart.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })} - ${weekEnd.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      })}`;
-    } else {
-      dateLabel = d.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-    }
+      if (selectedRange === "1D") {
+        dateLabel = d.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } else if (selectedRange === "1W") {
+        dateLabel = d.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "short",
+          day: "numeric",
+        });
+      } else if (selectedRange === "1M") {
+        const weekStart = new Date(d);
+        weekStart.setDate(d.getDate() - d.getDay() + 1);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        dateLabel = `${weekStart.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })} - ${weekEnd.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })}`;
+      } else {
+        dateLabel = d.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
+      }
 
-    return (
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg min-w-[200px]">
-        <p className="text-gray-300 text-xs mb-2">{dateLabel}</p>
-        <p className="text-white font-bold text-lg mb-2">
-          $
-          {payload[0].value.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </p>
-        
-        {/* Show transaction details if available */}
-        {dataPoint.transaction && (
-          <div className="mt-2 pt-2 border-t border-gray-600">
-            <div className={`flex items-center gap-2 text-xs ${
-              dataPoint.transaction.type === 'credit' 
-                ? 'text-green-400' 
-                : 'text-red-400'
-            }`}>
-              <span className="font-semibold">
-                {dataPoint.transaction.type === 'credit' ? '+' : '-'}
-                ${dataPoint.transaction.amount.toLocaleString()}
-              </span>
-              <span className="text-gray-400">
-                {dataPoint.transaction.wallet}
-              </span>
+      return (
+        <div className={`rounded-lg p-3 shadow-lg min-w-[200px] ${
+          darkMode 
+            ? 'bg-gray-800 border border-gray-700' 
+            : 'bg-white border border-gray-200'
+        }`}>
+          <p className={`text-xs mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {dateLabel}
+          </p>
+          <p className={`font-bold text-lg mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            $
+            {payload[0].value.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+          
+          {/* Show transaction details if available */}
+          {dataPoint.transaction && (
+            <div className={`mt-2 pt-2 ${darkMode ? 'border-t border-gray-600' : 'border-t border-gray-200'}`}>
+              <div className={`flex items-center gap-2 text-xs ${
+                dataPoint.transaction.type === 'credit' 
+                  ? 'text-green-400' 
+                  : 'text-red-400'
+              }`}>
+                <span className="font-semibold">
+                  {dataPoint.transaction.type === 'credit' ? '+' : '-'}
+                  ${dataPoint.transaction.amount.toLocaleString()}
+                </span>
+                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                  {dataPoint.transaction.wallet}
+                </span>
+              </div>
+              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {dataPoint.transaction.description}
+              </p>
             </div>
-            <p className="text-gray-400 text-xs mt-1">
-              {dataPoint.transaction.description}
-            </p>
-          </div>
-        )}
-      </div>
-    );
-  }
-  return null;
-};
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Handle empty data states
   if (!filteredData || filteredData.length === 0) {
     return (
       <div
         className={cn(
-          "p-6 rounded-xl border border-gray-800 bg-gray-900/50",
+          "p-6 rounded-xl border",
+          darkMode 
+            ? "border-gray-800 bg-gray-900/50" 
+            : "border-gray-200 bg-white shadow-sm",
           className
         )}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               Portfolio Value
             </h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className="text-3xl font-bold text-white">
+              <span className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 $
                 {totalValue.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
@@ -317,7 +331,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             </div>
           </div>
 
-          <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
+          <div className={`flex space-x-1 rounded-lg p-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
             {timeRanges.map((range) => (
               <button
                 key={range.id}
@@ -326,7 +340,9 @@ const CustomTooltip = ({ active, payload, label }) => {
                   "px-3 py-1 rounded-md text-sm font-medium transition-all duration-200",
                   selectedRange === range.id
                     ? "bg-cyan-500 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700"
+                    : darkMode
+                    ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                 )}
               >
                 {range.label}
@@ -335,11 +351,13 @@ const CustomTooltip = ({ active, payload, label }) => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center h-80 bg-gray-800/30 rounded-lg">
-          <p className="text-gray-400 text-lg">
+        <div className={`flex flex-col items-center justify-center h-80 rounded-lg ${
+          darkMode ? 'bg-gray-800/30' : 'bg-gray-100'
+        }`}>
+          <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             No transaction data available for this period
           </p>
-          <p className="text-gray-500 text-sm mt-2">
+          <p className={`text-sm mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
             Try selecting a different time range
           </p>
         </div>
@@ -350,18 +368,21 @@ const CustomTooltip = ({ active, payload, label }) => {
   return (
     <div
       className={cn(
-        "p-6 rounded-xl border border-gray-800 bg-gray-900/50",
+        "p-6 rounded-xl border",
+        darkMode 
+          ? "border-gray-800 bg-gray-900/50" 
+          : "border-gray-200 bg-white shadow-sm",
         className
       )}
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
             Portfolio Value
           </h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className="text-3xl font-bold text-white">
+            <span className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
               $
               {totalValue.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
@@ -384,13 +405,15 @@ const CustomTooltip = ({ active, payload, label }) => {
                 {isPositive ? "+" : ""}
                 {displayPercent.toFixed(2)}%
               </span>
-              <span className="text-gray-400 text-sm">24h</span>
+              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                24h
+              </span>
             </div>
           </div>
         </div>
 
         {/* Time-range selector */}
-        <div className="flex space-x-1 bg-gray-800 rounded-lg p-1">
+        <div className={`flex space-x-1 rounded-lg p-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
           {timeRanges.map((range) => (
             <button
               key={range.id}
@@ -399,7 +422,9 @@ const CustomTooltip = ({ active, payload, label }) => {
                 "px-3 py-1 rounded-md text-sm font-medium transition-all duration-200",
                 selectedRange === range.id
                   ? "bg-cyan-500 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : darkMode
+                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
               )}
             >
               {range.label}
@@ -428,10 +453,13 @@ const CustomTooltip = ({ active, payload, label }) => {
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke={darkMode ? "#374151" : "#e5e7eb"} 
+            />
             <XAxis
               dataKey="date"
-              stroke="#9ca3af"
+              stroke={darkMode ? "#9ca3af" : "#6b7280"}
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -440,7 +468,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               minTickGap={30}
             />
             <YAxis
-              stroke="#9ca3af"
+              stroke={darkMode ? "#9ca3af" : "#6b7280"}
               fontSize={12}
               tickLine={false}
               axisLine={false}

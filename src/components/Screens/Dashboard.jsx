@@ -6,6 +6,9 @@ import {
   TrendingUp,
   TrendingDown,
   AlertCircle,
+  DollarSign,
+  Repeat,
+  Layers,
 } from "lucide-react";
 import PortfolioChart from "../ui/PortfolioChart";
 import AccountCard from "../ui/AccountCard";
@@ -22,98 +25,100 @@ const Dashboard = () => {
   const [walletData, setWalletData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilters, setActiveFilters] = useState({
+    filter: null,
+  });
 
   // ────── HELPERS ──────
   const parseBalance = (str) => parseFloat(str.replace(/,/g, "")) || 0;
-// ────── PORTFOLIO HISTORY (transaction-based points) ──────
-const portfolioData = useMemo(() => {
-  if (!walletData?.wallets) return [];
 
-  const allTxs = [];
-  const balances = {};
+  // ────── PORTFOLIO HISTORY (transaction-based points) ──────
+  const portfolioData = useMemo(() => {
+    if (!walletData?.wallets) return [];
 
-  // Init balances to 0
-  walletData.wallets.forEach((w) => {
-    balances[w.wallet_type] = 0;
-  });
+    const allTxs = [];
+    const balances = {};
 
-  // Collect every transaction with proper timestamp
-  walletData.wallets.forEach((w) => {
-    w.transactions?.forEach((tx) => {
-      allTxs.push({
-        ...tx,
-        wallet_type: w.wallet_type,
-        timestamp: new Date(tx.created_at).getTime(),
-        amount: parseFloat(tx.amount.replace(/,/g, "")),
-        type: tx.type,
+    // Init balances to 0
+    walletData.wallets.forEach((w) => {
+      balances[w.wallet_type] = 0;
+    });
+
+    // Collect every transaction with proper timestamp
+    walletData.wallets.forEach((w) => {
+      w.transactions?.forEach((tx) => {
+        allTxs.push({
+          ...tx,
+          wallet_type: w.wallet_type,
+          timestamp: new Date(tx.created_at).getTime(),
+          amount: parseFloat(tx.amount.replace(/,/g, "")),
+          type: tx.type,
+        });
       });
     });
-  });
 
-  // No transactions → show current total balance as single point
-  if (allTxs.length === 0) {
-    const today = new Date().toISOString();
-    const total = parseBalance(walletData?.total_balance || "0");
-    return total > 0 ? [{ date: today, value: total }] : [];
-  }
-
-  // Sort by time (oldest first)
-  allTxs.sort((a, b) => a.timestamp - b.timestamp);
-
-  // Build data points - one for each transaction
-  const points = [];
-  const cur = { ...balances };
-
-  // Add starting point (balance = 0 before first transaction)
-  const firstTx = allTxs[0];
-  points.push({
-    date: new Date(firstTx.timestamp - 1000).toISOString(),
-    value: 0,
-    transaction: null
-  });
-
-  // Process each transaction
-  allTxs.forEach((tx) => {
-    // Update balance for this wallet type
-    if (tx.type === "credit") {
-      cur[tx.wallet_type] += tx.amount;
-    } else {
-      cur[tx.wallet_type] -= tx.amount;
+    // No transactions → show current total balance as single point
+    if (allTxs.length === 0) {
+      const today = new Date().toISOString();
+      const total = parseBalance(walletData?.total_balance || "0");
+      return total > 0 ? [{ date: today, value: total }] : [];
     }
-    
-    // Calculate total across all wallets
-    const total = Object.values(cur).reduce((s, v) => s + v, 0);
-    
-    // Add point at this transaction time
-    points.push({
-      date: new Date(tx.timestamp).toISOString(),
-      value: Math.max(0, total),
-      transaction: {
-        type: tx.type,
-        amount: tx.amount,
-        wallet: tx.wallet_type,
-        description: tx.description
-      }
-    });
-  });
 
-  // Add current point if needed
-  const currentTotal = parseBalance(walletData?.total_balance || "0");
-  const lastPoint = points[points.length - 1];
-  
-  if (Math.abs(currentTotal - lastPoint.value) > 0.01) {
+    // Sort by time (oldest first)
+    allTxs.sort((a, b) => a.timestamp - b.timestamp);
+
+    // Build data points - one for each transaction
+    const points = [];
+    const cur = { ...balances };
+
+    // Add starting point (balance = 0 before first transaction)
+    const firstTx = allTxs[0];
     points.push({
-      date: new Date().toISOString(),
-      value: currentTotal,
+      date: new Date(firstTx.timestamp - 1000).toISOString(),
+      value: 0,
       transaction: null
     });
-  }
 
-  console.log('Portfolio Data Points:', points.length);
-  console.log('Transactions visualized:', allTxs.length);
+    // Process each transaction
+    allTxs.forEach((tx) => {
+      // Update balance for this wallet type
+      if (tx.type === "credit") {
+        cur[tx.wallet_type] += tx.amount;
+      } else {
+        cur[tx.wallet_type] -= tx.amount;
+      }
+      
+      // Calculate total across all wallets
+      const total = Object.values(cur).reduce((s, v) => s + v, 0);
+      
+      // Add point at this transaction time
+      points.push({
+        date: new Date(tx.timestamp).toISOString(),
+        value: Math.max(0, total),
+        transaction: {
+          type: tx.type,
+          amount: tx.amount,
+          wallet: tx.wallet_type,
+          description: tx.description
+        }
+      });
+    });
 
-  return points;
-}, [walletData]);
+    // Add current point if needed
+    const currentTotal = parseBalance(walletData?.total_balance || "0");
+    const lastPoint = points[points.length - 1];
+    
+    if (Math.abs(currentTotal - lastPoint.value) > 0.01) {
+      points.push({
+        date: new Date().toISOString(),
+        value: currentTotal,
+        transaction: null
+      });
+    }
+
+    return points;
+  }, [walletData]);
+
   const change24h = useMemo(() => {
     if (!walletData?.wallets) return 0;
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
@@ -179,7 +184,13 @@ const portfolioData = useMemo(() => {
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("Authentication token not found. Please log in.");
 
-      const res = await fetch(`${BASE_URL}/wallet`, {
+      // Build query params
+      let url = `${BASE_URL}/wallet`;
+      if (activeFilters.filter) {
+        url += `?filter=${activeFilters.filter}`;
+      }
+
+      const res = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -206,7 +217,7 @@ const portfolioData = useMemo(() => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeFilters]);
 
   // ────── EARLY RETURNS (AFTER ALL HOOKS) ──────
   if (loading) {
@@ -242,6 +253,104 @@ const portfolioData = useMemo(() => {
   // ────── MAIN RENDER ──────
   return (
     <div className="space-y-6 w-full py-6 max-w-screen-2xl mx-auto px-4">
+      {/* Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Buy / Sell */}
+      <button
+      onClick={() =>
+        setActiveFilters({
+          filter: activeFilters.filter === "swing" ? null : "swing",
+        })
+      }
+      className={`p-6 rounded-xl border transition-all text-left w-full ${
+        activeFilters.filter === "swing"
+          ? "border-cyan-500 bg-gray-800/50"
+          : "border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40"
+      }`}
+    >
+      <div className="flex items-start space-x-4">
+        <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center flex-shrink-0">
+          <DollarSign className="w-6 h-6 text-gray-400" />
+        </div>
+
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-white mb-1">Buy / Sell</h3>
+          <p className="text-sm text-gray-400 mb-3">
+            Buy and sell with trusted providers
+          </p>
+
+          {/* 🟢 Add Buy / Sell buttons */}
+          <div className="flex space-x-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // prevent triggering parent click
+                navigate("/receive");
+              }}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              Buy
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate("/send");
+              }}
+              className="px-4 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-white"
+            >
+              Sell
+            </button>
+          </div>
+        </div>
+      </div>
+    </button>
+
+        {/* Swap */}
+        <button
+          onClick={() => setActiveFilters({ filter: activeFilters.filter === '3year' ? null : '3year' })}
+          className={`p-6 rounded-xl border transition-all text-left ${
+            activeFilters.filter === '3year'
+              ? 'border-purple-500 bg-gray-800/50'
+              : 'border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40'
+          }`}
+        >
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center flex-shrink-0">
+              <Repeat className="w-6 h-6 text-gray-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className="text-lg font-semibold text-white">Swap</h3>
+                <span className="px-2 py-0.5 text-xs font-medium bg-purple-500/20 text-purple-300 rounded-full">
+                  Popular
+                </span>
+              </div>
+              <p className="text-sm text-gray-400">Convert crypto to crypto securely</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Stake */}
+        <button
+          onClick={() => setActiveFilters({ filter: activeFilters.filter === 'beginner' ? null : 'beginner' })}
+          className={`p-6 rounded-xl border transition-all text-left ${
+            activeFilters.filter === 'beginner'
+              ? 'border-green-500 bg-gray-800/50'
+              : 'border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40'
+          }`}
+        >
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 rounded-full bg-gray-700/50 flex items-center justify-center flex-shrink-0">
+              <Layers className="w-6 h-6 text-gray-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-1">Stake</h3>
+              <p className="text-sm text-gray-400">Grow your crypto Live</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

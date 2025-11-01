@@ -23,9 +23,9 @@ const BASE_URL = "https://ledger.laptopindubai.com/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { darkMode, toggleDarkMode } = useDarkMode(); // 🔥 Use shared dark mode
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
-  // ────── STATE & HOOKS (must be at the top) ──────
+  // ────── STATE & HOOKS ──────
   const [walletData, setWalletData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,19 +36,17 @@ const Dashboard = () => {
   // ────── HELPERS ──────
   const parseBalance = (str) => parseFloat(str.replace(/,/g, "")) || 0;
 
-  // ────── PORTFOLIO HISTORY (transaction-based points) ──────
+  // ────── PORTFOLIO HISTORY ──────
   const portfolioData = useMemo(() => {
     if (!walletData?.wallets) return [];
 
     const allTxs = [];
     const balances = {};
 
-    // Init balances to 0
     walletData.wallets.forEach((w) => {
       balances[w.wallet_type] = 0;
     });
 
-    // Collect every transaction with proper timestamp
     walletData.wallets.forEach((w) => {
       w.transactions?.forEach((tx) => {
         allTxs.push({
@@ -61,21 +59,17 @@ const Dashboard = () => {
       });
     });
 
-    // No transactions → show current total balance as single point
     if (allTxs.length === 0) {
       const today = new Date().toISOString();
       const total = parseBalance(walletData?.total_balance || "0");
       return total > 0 ? [{ date: today, value: total }] : [];
     }
 
-    // Sort by time (oldest first)
     allTxs.sort((a, b) => a.timestamp - b.timestamp);
 
-    // Build data points - one for each transaction
     const points = [];
     const cur = { ...balances };
 
-    // Add starting point (balance = 0 before first transaction)
     const firstTx = allTxs[0];
     points.push({
       date: new Date(firstTx.timestamp - 1000).toISOString(),
@@ -83,19 +77,15 @@ const Dashboard = () => {
       transaction: null
     });
 
-    // Process each transaction
     allTxs.forEach((tx) => {
-      // Update balance for this wallet type
       if (tx.type === "credit") {
         cur[tx.wallet_type] += tx.amount;
       } else {
         cur[tx.wallet_type] -= tx.amount;
       }
       
-      // Calculate total across all wallets
       const total = Object.values(cur).reduce((s, v) => s + v, 0);
       
-      // Add point at this transaction time
       points.push({
         date: new Date(tx.timestamp).toISOString(),
         value: Math.max(0, total),
@@ -108,7 +98,6 @@ const Dashboard = () => {
       });
     });
 
-    // Add current point if needed
     const currentTotal = parseBalance(walletData?.total_balance || "0");
     const lastPoint = points[points.length - 1];
     
@@ -163,20 +152,53 @@ const Dashboard = () => {
     return list.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [walletData]);
 
-  // ────── DERIVED VALUES ──────
+  // ────── DERIVED VALUES WITH MARKET DATA ──────
   const totalBalance = parseBalance(walletData?.total_balance || "0");
+
+  // Calculate total USD value using market data
+  const totalUsdValue = useMemo(() => {
+    if (!walletData?.wallets) return 0;
+    
+    return walletData.wallets.reduce((total, wallet) => {
+      const balance = parseBalance(wallet.balance);
+      const currentPrice = wallet.market_data?.current_price || 0;
+      return total + (balance * currentPrice);
+    }, 0);
+  }, [walletData]);
+
+  // Calculate portfolio 24h change
+  const portfolio24hChange = useMemo(() => {
+    if (!walletData?.wallets) return 0;
+    
+    return walletData.wallets.reduce((total, wallet) => {
+      const balance = parseBalance(wallet.balance);
+      const currentPrice = wallet.market_data?.current_price || 0;
+      const priceChange24h = wallet.market_data?.price_change_24h || 0;
+      const walletValue = balance * currentPrice;
+      const change = (walletValue * priceChange24h) / 100;
+      return total + change;
+    }, 0);
+  }, [walletData]);
 
   const accounts = useMemo(
     () =>
-      walletData?.wallets?.map((w) => ({
-        coinName: `${w.wallet_type} Wallet`,
-        coinSymbol: w.wallet_type,
-        balance: parseBalance(w.balance),
-        fiatValue: parseBalance(w.balance),
-        change24h: 0,
-        coinIcon:
-          { BTC: "₿", ETH: "Ξ", USDT: "₮" }[w.wallet_type] || "●",
-      })) ?? [],
+      walletData?.wallets?.map((w) => {
+        const balance = parseBalance(w.balance);
+        const currentPrice = w.market_data?.current_price || 0;
+        const usdValue = balance * currentPrice;
+        
+        return {
+          coinName: `${w.wallet_type} Wallet`,
+          coinSymbol: w.wallet_type,
+          balance: balance,
+          fiatValue: usdValue,
+          change24h: w.market_data?.price_change_24h || 0,
+          change7d: w.market_data?.price_change_7d || 0,
+          currentPrice: currentPrice,
+          marketCapRank: w.market_data?.market_cap_rank || 0,
+          coinIcon: { BTC: "₿", ETH: "Ξ", USDT: "₮", SOL: "◎", BNB: "⬡" }[w.wallet_type] || "●",
+        };
+      }) ?? [],
     [walletData]
   );
 
@@ -188,7 +210,6 @@ const Dashboard = () => {
       const token = localStorage.getItem("authToken");
       if (!token) throw new Error("Authentication token not found. Please log in.");
 
-      // Build query params
       let url = `${BASE_URL}/wallet`;
       if (activeFilters.filter) {
         url += `?filter=${activeFilters.filter}`;
@@ -223,7 +244,7 @@ const Dashboard = () => {
     fetchData();
   }, [activeFilters]);
 
-  // ────── EARLY RETURNS (AFTER ALL HOOKS) ──────
+  // ────── EARLY RETURNS ──────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -259,7 +280,6 @@ const Dashboard = () => {
     <div className={`space-y-6 w-full py-6 max-w-screen-2xl mx-auto px-4 transition-colors ${darkMode ? 'bg-gradient-to-b from-gray-900 to-black text-white' : 'bg-gradient-to-b from-gray-50 to-white text-gray-900'}`}>
       {/* Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Buy / Sell */}
         <button
           onClick={() =>
             setActiveFilters({
@@ -287,7 +307,6 @@ const Dashboard = () => {
                 Buy and sell with trusted providers
               </p>
 
-              {/* Buy / Sell buttons */}
               <div className="flex space-x-3">
                 <button
                   onClick={(e) => {
@@ -313,7 +332,6 @@ const Dashboard = () => {
           </div>
         </button>
 
-        {/* Swap */}
         <button
           onClick={() => setActiveFilters({ filter: activeFilters.filter === '3year' ? null : '3year' })}
           className={`p-6 rounded-xl border transition-all text-left ${
@@ -342,7 +360,6 @@ const Dashboard = () => {
           </div>
         </button>
 
-        {/* Stake */}
         <button
           onClick={() => setActiveFilters({ filter: activeFilters.filter === 'beginner' ? null : 'beginner' })}
           className={`p-6 rounded-xl border transition-all text-left ${
@@ -395,18 +412,6 @@ const Dashboard = () => {
             <ShoppingCart className="w-4 h-4 mr-2" />
             Add Funds
           </Button>
-          {/* <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 flex-1 sm:flex-none">
-            <Plus className="w-4 h-4 mr-2" />
-            New Transaction
-          </Button> */}
-          {/* <Button
-            variant="outline"
-            className={`${darkMode ? 'border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900'} flex-1 sm:flex-none`}
-            onClick={toggleDarkMode}
-          >
-            {darkMode ? <Sun className="w-4 h-4 mr-2" /> : <Moon className="w-4 h-4 mr-2" />}
-            Toggle Theme
-          </Button> */}
         </div>
       </div>
 
@@ -414,9 +419,9 @@ const Dashboard = () => {
       <div className="overflow-x-auto rounded-lg">
         <PortfolioChart
           data={portfolioData}
-          totalValue={totalBalance}
-          change24h={change24h}
-          changePercent={(change24h / totalBalance) * 100}
+          totalValue={totalUsdValue}
+          change24h={portfolio24hChange}
+          changePercent={(portfolio24hChange / totalUsdValue) * 100}
           darkMode={darkMode}
         />
       </div>
@@ -450,7 +455,7 @@ const Dashboard = () => {
               View All
             </Button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 overflow-x-auto max-h-200">
             {recentTransactions.length > 0 ? (
               recentTransactions.map((tx, i) => (
                 <div
@@ -473,28 +478,34 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-white shadow-sm'}`}>
           <div className="flex items-center space-x-2 mb-2">
-            {change24h >= 0 ? (
+            {portfolio24hChange >= 0 ? (
               <TrendingUp className="w-5 h-5 text-green-400" />
             ) : (
               <TrendingDown className="w-5 h-5 text-red-400" />
             )}
             <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>24h Change</span>
           </div>
-          <p className={`text-xl font-bold ${change24h >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {change24h >= 0 ? "+" : ""}${change24h.toFixed(2)}
+          <p className={`text-xl font-bold ${portfolio24hChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {portfolio24hChange >= 0 ? "+" : ""}${portfolio24hChange.toFixed(2)}
+          </p>
+          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            {portfolio24hChange >= 0 ? "+" : ""}{((portfolio24hChange / totalUsdValue) * 100).toFixed(2)}%
           </p>
         </div>
 
         <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-white shadow-sm'}`}>
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-5 h-5 rounded-full bg-blue-500" />
-            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total Balance</span>
+            <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total USD Value</span>
           </div>
           <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            ${totalBalance.toLocaleString("en-US", {
+            ${totalUsdValue.toLocaleString("en-US", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
+          </p>
+          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            {totalBalance.toFixed(2)} coins
           </p>
         </div>
 

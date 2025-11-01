@@ -287,7 +287,7 @@ const Accounts = () => {
             />
           </div>
 
-          <Button 
+          {/* <Button 
             variant="outline" 
             className={cn(
               darkMode 
@@ -297,7 +297,7 @@ const Accounts = () => {
           >
             <Filter className="w-4 h-4 mr-2" />
             Filter
-          </Button>
+          </Button> */}
         </div>
 
         <button
@@ -347,7 +347,6 @@ const Accounts = () => {
                   "text-right p-4 text-sm font-medium",
                   darkMode ? "text-gray-400" : "text-gray-600"
                 )}>
-                  Actions
                 </th>
               </tr>
             </thead>
@@ -429,7 +428,7 @@ const Accounts = () => {
                         </Button>
                       </Link>
 
-                      <Button 
+                      {/* <Button 
                         size="sm" 
                         variant="ghost" 
                         className={cn(
@@ -439,7 +438,7 @@ const Accounts = () => {
                         )}
                       >
                         <MoreVertical className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </td>
                 </tr>

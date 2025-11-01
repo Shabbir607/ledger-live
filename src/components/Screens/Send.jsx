@@ -35,6 +35,21 @@ const Send = () => {
     { id: 'fast', label: 'Fast', time: '~5 min', fee: '0.0001', fiat: '$4.20' }
   ];
 
+  // Helper function to parse balance string with commas
+  const parseBalance = (balanceStr) => {
+    if (!balanceStr) return 0;
+    return parseFloat(balanceStr.toString().replace(/,/g, '')) || 0;
+  };
+
+  // Helper function to format balance for display
+  const formatBalance = (balanceStr, decimals = 2) => {
+    const balance = parseBalance(balanceStr);
+    return balance.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  };
+
   useEffect(() => {
     const fetchWallets = async () => {
       try {
@@ -55,7 +70,7 @@ const Send = () => {
 
         if (data.success && data.wallets) {
           setWallets(data.wallets);
-          const firstWithBalance = data.wallets.find(w => parseFloat(w.balance) > 0);
+          const firstWithBalance = data.wallets.find(w => parseBalance(w.balance) > 0);
           setSelectedWallet(firstWithBalance || data.wallets[0]);
         } else {
           setError(data.message || 'Failed to load wallets');
@@ -103,6 +118,21 @@ const Send = () => {
         setAmount('');
         setRecipientAddress('');
         setMemo('');
+        
+        // Refresh wallets after successful send
+        const refreshResponse = await fetch(`${BASE_URL}/wallet`, {
+          method: 'GET',
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const refreshData = await refreshResponse.json();
+        if (refreshData.success && refreshData.wallets) {
+          setWallets(refreshData.wallets);
+          const updatedWallet = refreshData.wallets.find(w => w.wallet_type === selectedWallet.wallet_type);
+          setSelectedWallet(updatedWallet);
+        }
       } else {
         setError(result.message || 'Transaction failed');
       }
@@ -113,7 +143,7 @@ const Send = () => {
     }
   };
 
-  const balance = selectedWallet ? parseFloat(selectedWallet.balance) : 0;
+  const balance = selectedWallet ? parseBalance(selectedWallet.balance) : 0;
   const amountValue = parseFloat(amount) || 0;
 
   const isFormValid = selectedWallet && 
@@ -123,7 +153,7 @@ const Send = () => {
                       balance > 0;
 
   const getCoinIcon = (type) => {
-    const icons = { BTC: '₿', ETH: 'Ξ', USDT: '₮', ADA: '₳' };
+    const icons = { BTC: '₿', ETH: 'Ξ', USDT: '₮', SOL: '◎', BNB: '⬡', ADA: '₳' };
     return icons[type] || type[0];
   };
 
@@ -132,6 +162,8 @@ const Send = () => {
       BTC: 'from-orange-400 to-yellow-500',
       ETH: 'from-blue-400 to-purple-500',
       USDT: 'from-green-400 to-emerald-500',
+      SOL: 'from-purple-400 to-pink-500',
+      BNB: 'from-yellow-400 to-orange-500',
       ADA: 'from-blue-500 to-cyan-500',
     };
     return gradients[type] || 'from-gray-400 to-gray-600';
@@ -166,10 +198,10 @@ const Send = () => {
             "text-xl font-semibold mb-2",
             darkMode ? "text-white" : "text-gray-900"
           )}>
-            No Funds Available
+            No Wallets Available
           </h3>
           <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-            You don't have any balance to send.
+            You don't have any wallets set up yet.
           </p>
         </div>
       </div>
@@ -271,7 +303,7 @@ const Send = () => {
                     "text-sm",
                     darkMode ? "text-gray-400" : "text-gray-600"
                   )}>
-                    {parseFloat(selectedWallet?.balance).toFixed(4)} {selectedWallet?.wallet_type}
+                    {formatBalance(selectedWallet?.balance)} {selectedWallet?.wallet_type}
                   </p>
                 </div>
               </div>
@@ -282,13 +314,13 @@ const Send = () => {
 
             {showAssetDropdown && wallets.length > 1 && (
               <div className={cn(
-                "absolute top-full left-0 right-0 mt-2 border rounded-lg shadow-lg z-10",
+                "absolute top-full left-0 right-0 mt-2 border rounded-lg shadow-lg z-10 max-h-64 overflow-y-auto",
                 darkMode 
                   ? "bg-gray-800 border-gray-700" 
                   : "bg-white border-gray-200"
               )}>
                 {wallets.map((wallet) => {
-                  const walletBalance = parseFloat(wallet.balance);
+                  const walletBalance = parseBalance(wallet.balance);
                   const isDisabled = walletBalance === 0;
 
                   return (
@@ -297,6 +329,7 @@ const Send = () => {
                       onClick={() => {
                         setSelectedWallet(wallet);
                         setShowAssetDropdown(false);
+                        setAmount(''); // Reset amount when changing wallet
                       }}
                       disabled={isDisabled}
                       className={cn(
@@ -309,14 +342,14 @@ const Send = () => {
                       )}
                     >
                       <div className={cn(
-                        "w-8 h-8 rounded-full bg-gradient-to-r flex items-center justify-center text-white font-bold text-xs",
+                        "w-8 h-8 rounded-full bg-gradient-to-r flex items-center justify-center text-white font-bold text-xs flex-shrink-0",
                         getGradient(wallet.wallet_type)
                       )}>
                         {getCoinIcon(wallet.wallet_type)}
                       </div>
-                      <div className="text-left flex-1">
+                      <div className="text-left flex-1 min-w-0">
                         <p className={cn(
-                          "font-medium",
+                          "font-medium truncate",
                           isDisabled 
                             ? "text-gray-500" 
                             : darkMode 
@@ -326,13 +359,15 @@ const Send = () => {
                           {wallet.wallet_type}
                         </p>
                         <p className={cn(
-                          "text-sm",
+                          "text-sm truncate",
                           darkMode ? "text-gray-400" : "text-gray-600"
                         )}>
-                          {walletBalance.toFixed(4)} {wallet.wallet_type}
+                          {formatBalance(wallet.balance, 2)} {wallet.wallet_type}
                         </p>
                       </div>
-                      {isDisabled && <span className="text-xs text-orange-400">No funds</span>}
+                      {isDisabled && (
+                        <span className="text-xs text-orange-400 flex-shrink-0">No funds</span>
+                      )}
                     </button>
                   );
                 })}
@@ -396,7 +431,7 @@ const Send = () => {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
-                max={selectedWallet?.balance}
+                max={balance}
                 step="any"
                 disabled={!selectedWallet || balance === 0}
                 className={cn(
@@ -421,7 +456,7 @@ const Send = () => {
                 Available:{' '}
               </span>
               <span className={balance > 0 ? (darkMode ? "text-white" : "text-gray-900") : "text-red-400"}>
-                {balance.toFixed(8)} {selectedWallet?.wallet_type}
+                {formatBalance(selectedWallet?.balance, 2)} {selectedWallet?.wallet_type}
               </span>
             </p>
 
@@ -448,7 +483,7 @@ const Send = () => {
                       : "border-gray-300 text-gray-700 hover:bg-gray-100"
                   )}
                   onClick={() => {
-                    const val = (balance * (pct / 100)).toString();
+                    const val = (balance * (pct / 100)).toFixed(8);
                     setAmount(val);
                   }}
                 >
@@ -556,7 +591,7 @@ const Send = () => {
         </div>
 
         {/* High Amount Warning */}
-        {amount && selectedWallet && parseFloat(amount) > parseFloat(selectedWallet.balance) * 0.9 && (
+        {amount && selectedWallet && parseFloat(amount) > balance * 0.9 && (
           <div className={cn(
             "flex items-start space-x-3 p-4 rounded-lg border",
             darkMode 

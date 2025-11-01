@@ -1,19 +1,24 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, MoreHorizontal } from 'lucide-react';
+import { TrendingUp, TrendingDown, MoreHorizontal, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useDarkMode } from '../DarkModeContext';
+import { Link } from 'react-router-dom';
 
 const AccountCard = ({ 
   coinName, 
   coinSymbol, 
   balance, 
   fiatValue, 
-  change24h, 
+  change24h,
+  change7d,
+  currentPrice,
+  marketCapRank,
   coinIcon,
   className 
 }) => {
   const { darkMode } = useDarkMode();
   const isPositive = change24h >= 0;
+  const is7dPositive = change7d >= 0;
   
   return (
     <div className={cn(
@@ -39,12 +44,25 @@ const AccountCard = ({
               {coinIcon || coinSymbol.slice(0, 2)}
             </div>
             <div>
-              <h3 className={cn(
-                "font-semibold",
-                darkMode ? "text-white" : "text-gray-900"
-              )}>
-                {coinName}
-              </h3>
+              <div className="flex items-center space-x-2">
+                <h3 className={cn(
+                  "font-semibold",
+                  darkMode ? "text-white" : "text-gray-900"
+                )}>
+                  {coinName}
+                </h3>
+                {marketCapRank > 0 && marketCapRank <= 10 && (
+                  <span className={cn(
+                    "px-1.5 py-0.5 text-xs font-medium rounded flex items-center space-x-1",
+                    darkMode 
+                      ? "bg-yellow-500/20 text-yellow-300" 
+                      : "bg-yellow-100 text-yellow-700"
+                  )}>
+                    <Award className="w-3 h-3" />
+                    <span>#{marketCapRank}</span>
+                  </span>
+                )}
+              </div>
               <p className={cn(
                 "text-sm",
                 darkMode ? "text-gray-400" : "text-gray-600"
@@ -72,56 +90,107 @@ const AccountCard = ({
             "text-2xl font-bold mb-1",
             darkMode ? "text-white" : "text-gray-900"
           )}>
-            {balance} {coinSymbol}
+            {balance.toLocaleString()} {coinSymbol}
           </p>
-          <p className={cn(
-            "text-lg",
-            darkMode ? "text-gray-300" : "text-gray-700"
-          )}>
-            ${fiatValue.toLocaleString()}
-          </p>
+          <div className="flex items-baseline space-x-2">
+            <p className={cn(
+              "text-lg font-semibold",
+              darkMode ? "text-gray-300" : "text-gray-700"
+            )}>
+              ${fiatValue.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </p>
+            {currentPrice > 0 && (
+              <p className={cn(
+                "text-xs",
+                darkMode ? "text-gray-500" : "text-gray-400"
+              )}>
+                @ ${currentPrice.toLocaleString()}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* 24h Change */}
-        <div className="flex items-center space-x-2">
-          {isPositive ? (
-            <TrendingUp className="w-4 h-4 text-green-400" />
-          ) : (
-            <TrendingDown className="w-4 h-4 text-red-400" />
+        {/* Price Changes */}
+        <div className="flex items-center space-x-4 mb-3">
+          {/* 24h Change */}
+          <div className="flex items-center space-x-1.5">
+            {isPositive ? (
+              <TrendingUp className="w-4 h-4 text-green-400" />
+            ) : (
+              <TrendingDown className="w-4 h-4 text-red-400" />
+            )}
+            <div>
+              <span className={cn(
+                "text-sm font-medium",
+                isPositive ? "text-green-400" : "text-red-400"
+              )}>
+                {isPositive ? '+' : ''}{change24h.toFixed(2)}%
+              </span>
+              <span className={cn(
+                "text-xs ml-1",
+                darkMode ? "text-gray-500" : "text-gray-400"
+              )}>
+                24h
+              </span>
+            </div>
+          </div>
+
+          {/* 7d Change */}
+          {change7d !== undefined && (
+            <div className="flex items-center space-x-1.5">
+              {is7dPositive ? (
+                <TrendingUp className="w-3.5 h-3.5 text-green-400 opacity-70" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5 text-red-400 opacity-70" />
+              )}
+              <div>
+                <span className={cn(
+                  "text-xs font-medium",
+                  is7dPositive ? "text-green-400" : "text-red-400"
+                )}>
+                  {is7dPositive ? '+' : ''}{change7d.toFixed(2)}%
+                </span>
+                <span className={cn(
+                  "text-xs ml-1",
+                  darkMode ? "text-gray-500" : "text-gray-400"
+                )}>
+                  7d
+                </span>
+              </div>
+            </div>
           )}
-          <span className={cn(
-            "text-sm font-medium",
-            isPositive ? "text-green-400" : "text-red-400"
-          )}>
-            {isPositive ? '+' : ''}{change24h.toFixed(2)}%
-          </span>
-          <span className={cn(
-            "text-sm",
-            darkMode ? "text-gray-400" : "text-gray-600"
-          )}>
-            24h
-          </span>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex space-x-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <button className={cn(
-            "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors",
-            darkMode 
-              ? "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400" 
-              : "bg-cyan-100 hover:bg-cyan-200 text-cyan-600"
-          )}>
-            Send
-          </button>
-          <button className={cn(
-            "flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors",
-            darkMode 
-              ? "bg-green-500/20 hover:bg-green-500/30 text-green-400" 
-              : "bg-green-100 hover:bg-green-200 text-green-600"
-          )}>
-            Receive
-          </button>
-        </div>
+       
+<div className="flex space-x-2 mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+  <Link
+    to="/send"
+    className={cn(
+      "flex-1 text-center py-2 px-3 rounded-lg text-sm font-medium transition-colors",
+      darkMode
+        ? "bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400"
+        : "bg-cyan-100 hover:bg-cyan-200 text-cyan-600"
+    )}
+  >
+    Send
+  </Link>
+
+  <Link
+    to="/receive"
+    className={cn(
+      "flex-1 text-center py-2 px-3 rounded-lg text-sm font-medium transition-colors",
+      darkMode
+        ? "bg-green-500/20 hover:bg-green-500/30 text-green-400"
+        : "bg-green-100 hover:bg-green-200 text-green-600"
+    )}
+  >
+    Receive
+  </Link>
+</div>
       </div>
     </div>
   );

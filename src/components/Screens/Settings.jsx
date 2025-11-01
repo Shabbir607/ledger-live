@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 const BASE_URL = "https://ledger.laptopindubai.com/api";
+import { useDarkMode } from '../DarkModeContext';
 
 const SettingSection = ({ title, children, darkMode }) => (
   <div className={`p-6 rounded-xl border transition-colors ${
@@ -150,14 +151,14 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
 };
 
 const Settings = () => {
-  const [darkMode, setDarkMode] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [hideBalances, setHideBalances] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
-  
+  const { darkMode, toggleDarkMode } = useDarkMode();
+
   // Password change state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -178,13 +179,7 @@ const Settings = () => {
 
   const languages = [
     { code: 'en', name: 'English' },
-    { code: 'fr', name: 'Français' },
-    { code: 'es', name: 'Español' },
-    { code: 'de', name: 'Deutsch' },
-    { code: 'ja', name: '日本語' },
-    { code: 'ko', name: '한국어' },
-    { code: 'zh', name: '中文' },
-    { code: 'ar', name: 'العربية' }
+    { code: 'es', name: 'Spanish' }
   ];
 
   const currencies = [
@@ -195,12 +190,97 @@ const Settings = () => {
     { code: 'BTC', name: 'Bitcoin', symbol: '₿' }
   ];
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  // Load language and initialize Google Translate
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('selectedLanguage');
+    if (savedLanguage) {
+      setSelectedLanguage(savedLanguage);
+    }
+
+    // Initialize Google Translate (hidden)
+    if (!window.googleTranslateElementInit) {
+      window.googleTranslateElementInit = () => {
+        new window.google.translate.TranslateElement({
+          pageLanguage: 'en',
+          autoDisplay: false,
+          includedLanguages: 'en,es',
+          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element_hidden');
+      };
+
+      const script = document.createElement('script');
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    // Hide all Google Translate UI
+    const style = document.createElement('style');
+    style.textContent = `
+      .goog-te-banner-frame, 
+      .goog-te-balloon-frame, 
+      #goog-gt-tt, 
+      .goog-te-bubble-frame, 
+      .goog-tooltip, 
+      .skiptranslate,
+      .goog-te-gadget-icon,
+      .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+      #google_translate_element_hidden {
+        display: none !important;
+        visibility: hidden !important;
+      }
+      
+      body {
+        top: 0 !important;
+        position: static !important;
+      }
+      
+      .goog-text-highlight {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }, []);
 
   const handleLanguageChange = (langCode) => {
     setSelectedLanguage(langCode);
+    
+    // Update Google Translate
+    if (window.google && window.google.translate) {
+      const cookieName = 'googtrans';
+      const cookieValue = `/auto/${langCode}`;
+      const domain = window.location.hostname;
+
+      document.cookie = `${cookieName}=${cookieValue}; domain=${domain}; path=/;`;
+
+      if (domain.indexOf('.') !== -1) {
+        const rootDomain = domain.substring(domain.indexOf('.'));
+        document.cookie = `${cookieName}=${cookieValue}; domain=${rootDomain}; path=/;`;
+      }
+
+      try {
+        const select = document.querySelector('select.goog-te-combo');
+        if (select) {
+          select.value = langCode;
+          select.dispatchEvent(new Event('change'));
+        }
+      } catch (e) {
+        console.error('Error changing language:', e);
+      }
+
+      // Reload to apply translation
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    }
+    
+    localStorage.setItem('selectedLanguage', langCode);
     document.documentElement.lang = langCode;
     setShowLanguageModal(false);
+    
+    // Dispatch a custom event to notify other components
+    window.dispatchEvent(new CustomEvent('languageChange', { detail: langCode }));
   };
 
   const handlePasswordChange = async () => {
@@ -281,9 +361,19 @@ const Settings = () => {
     
     setTimeout(() => {
       const authToken = localStorage.getItem('authToken');
+      const savedLanguage = localStorage.getItem('selectedLanguage');
+      const savedDarkMode = localStorage.getItem('darkMode');
+      
       localStorage.clear();
+      
       if (authToken) {
         localStorage.setItem('authToken', authToken);
+      }
+      if (savedLanguage) {
+        localStorage.setItem('selectedLanguage', savedLanguage);
+      }
+      if (savedDarkMode) {
+        localStorage.setItem('darkMode', savedDarkMode);
       }
       
       setClearingCache(false);
@@ -298,6 +388,9 @@ const Settings = () => {
         ? 'bg-gradient-to-b from-gray-900 to-black text-white' 
         : 'bg-gradient-to-b from-gray-50 to-white text-gray-900'
     }`}>
+      {/* Hidden Google Translate Element */}
+      <div id="google_translate_element_hidden" style={{ display: 'none', visibility: 'hidden' }}></div>
+      
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
@@ -323,17 +416,19 @@ const Settings = () => {
           <SettingItem
             icon={Globe}
             title="Language"
-            description={`Currently: ${languages.find(l => l.code === selectedLanguage)?.name}`}
+            description={`Currently: ${languages.find(l => l.code === selectedLanguage)?.name || 'English'}`}
             onClick={() => setShowLanguageModal(true)}
             darkMode={darkMode}
           />
 
-          <SettingItem
-            icon={Database}
-            title="Display Currency"
-            description={`Currently: ${currencies.find(c => c.code === selectedCurrency)?.name}`}
-            darkMode={darkMode}
-          />
+          <div>
+            <SettingItem
+              icon={Database}
+              title="Display Currency"
+              description={`Currently: ${currencies.find(c => c.code === selectedCurrency)?.name}`}
+              darkMode={darkMode}
+            />
+          </div>
 
           <SettingItem
             icon={hideBalances ? EyeOff : Eye}
@@ -452,8 +547,6 @@ const Settings = () => {
             </div>
           </div>
         </div>
-
-       
       </div>
 
       {/* Password Change Modal */}
@@ -583,12 +676,12 @@ const Settings = () => {
         title="Select Language"
         darkMode={darkMode}
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-3">
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
-              className={`p-4 rounded-lg text-left transition-colors ${
+              className={`w-full p-4 rounded-lg text-left transition-colors flex items-center justify-between ${
                 selectedLanguage === lang.code
                   ? 'bg-cyan-500 text-white'
                   : darkMode
@@ -596,12 +689,10 @@ const Settings = () => {
                   : 'hover:bg-gray-100 text-gray-900 border border-gray-200'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{lang.name}</span>
-                {selectedLanguage === lang.code && (
-                  <Check className="w-5 h-5" />
-                )}
-              </div>
+              <span className="font-medium text-lg">{lang.name}</span>
+              {selectedLanguage === lang.code && (
+                <Check className="w-5 h-5" />
+              )}
             </button>
           ))}
         </div>

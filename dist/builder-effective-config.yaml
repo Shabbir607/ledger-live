@@ -7,17 +7,17 @@ files:
   - filter:
       - dist/**
       - electron/**
-extraResources: []
-icon: assets/icon.ico
-linux:
-  target:
-    - AppImage
-    - deb
-  category: Finance
-  maintainer: Your Name <you@example.com>
+icon: build/icon.ico
 win:
   target: nsis
-  icon: assets/icon.ico
-mac:
-  target: dmg
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Ledger Live Desktop
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
 electronVersion: 37.2.3

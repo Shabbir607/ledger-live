@@ -19,6 +19,7 @@ import {
   Check,
   X
 } from 'lucide-react';
+import { useHideBalances } from './useHideBalances';
 
 const BASE_URL = "https://ledger.laptopindubai.com/api";
 import { useDarkMode } from '../DarkModeContext';
@@ -154,8 +155,8 @@ const Settings = () => {
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(true);
-  const [hideBalances, setHideBalances] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [hideBalances, setHideBalances] = useHideBalances();
+ const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [selectedCurrency, setSelectedCurrency] = useState('USD');
   const { darkMode, toggleDarkMode } = useDarkMode();
 

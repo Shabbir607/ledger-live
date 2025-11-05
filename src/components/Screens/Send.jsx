@@ -7,11 +7,14 @@ import {
   ChevronDown,
   Send as SendIcon,
   Zap,
-  Loader2
+  Loader2,
+  Eye,        // Add this
+  EyeOff 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useDarkMode } from '../DarkModeContext';
+import { useHideBalances } from './useHideBalances';
 
 const BASE_URL = "https://ledger.laptopindubai.com/api";
 
@@ -28,7 +31,7 @@ const Send = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
+const [hideBalances, setHideBalances] = useHideBalances();
   const feeOptions = [
     { id: 'slow', label: 'Slow', time: '~30 min', fee: '0.00001', fiat: '$0.42' },
     { id: 'standard', label: 'Standard', time: '~10 min', fee: '0.00005', fiat: '$2.10' },
@@ -41,14 +44,15 @@ const Send = () => {
     return parseFloat(balanceStr.toString().replace(/,/g, '')) || 0;
   };
 
-  // Helper function to format balance for display
-  const formatBalance = (balanceStr, decimals = 2) => {
-    const balance = parseBalance(balanceStr);
-    return balance.toLocaleString('en-US', {
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
-    });
-  };
+// Helper function to format balance for display
+const formatBalance = (balanceStr, decimals = 2) => {
+  if (hideBalances) return '••••••';
+  const balance = parseBalance(balanceStr);
+  return balance.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
 
   useEffect(() => {
     const fetchWallets = async () => {
@@ -214,28 +218,44 @@ const Send = () => {
       darkMode ? "bg-gray-900" : "bg-gray-50"
     )}>
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "p-2",
-            darkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"
-          )}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className={cn(
-            "text-3xl font-bold",
-            darkMode ? "text-white" : "text-gray-900"
-          )}>
-            Send Crypto
-          </h1>
-          <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-            Send cryptocurrency to another address
-          </p>
-        </div>
-      </div>
+<div className="flex items-center justify-between">
+  <div className="flex items-center space-x-4">
+    <Button 
+      variant="ghost" 
+      className={cn(
+        "p-2",
+        darkMode ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"
+      )}
+    >
+      <ArrowLeft className="w-5 h-5" />
+    </Button>
+    <div>
+      <h1 className={cn(
+        "text-3xl font-bold",
+        darkMode ? "text-white" : "text-gray-900"
+      )}>
+        Send Crypto
+      </h1>
+      <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+        Send cryptocurrency to another address
+      </p>
+    </div>
+  </div>
+
+  {/* Hide Balance Toggle Button */}
+  <button
+    onClick={() => setHideBalances(!hideBalances)}
+    className={cn(
+      "flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors",
+      darkMode 
+        ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+        : "border-gray-300 text-gray-700 hover:bg-gray-100"
+    )}
+  >
+    {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+    <span>{hideBalances ? 'Show' : 'Hide'}</span>
+  </button>
+</div>
 
       {/* Error / Success */}
       {error && (
@@ -412,87 +432,88 @@ const Send = () => {
         </div>
 
         {/* Amount */}
-        <div className={cn(
-          "p-6 rounded-xl border",
+      {/* Amount */}
+<div className={cn(
+  "p-6 rounded-xl border",
+  darkMode 
+    ? "border-gray-800 bg-gray-900/50" 
+    : "border-gray-200 bg-white"
+)}>
+  <label className={cn(
+    "block text-sm font-medium mb-3",
+    darkMode ? "text-gray-300" : "text-gray-700"
+  )}>
+    Amount
+  </label>
+  <div className="space-y-4">
+    <div className="relative">
+      <input
+        type="number"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder={hideBalances ? "••••••" : "0.00"}
+        max={balance}
+        step="any"
+        disabled={!selectedWallet || balance === 0}
+        className={cn(
+          "w-full p-4 border rounded-lg text-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500",
+          balance === 0 && "opacity-50 cursor-not-allowed",
           darkMode 
-            ? "border-gray-800 bg-gray-900/50" 
-            : "border-gray-200 bg-white"
-        )}>
-          <label className={cn(
-            "block text-sm font-medium mb-3",
-            darkMode ? "text-gray-300" : "text-gray-700"
-          )}>
-            Amount
-          </label>
-          <div className="space-y-4">
-            <div className="relative">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                max={balance}
-                step="any"
-                disabled={!selectedWallet || balance === 0}
-                className={cn(
-                  "w-full p-4 border rounded-lg text-xl focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500",
-                  balance === 0 && "opacity-50 cursor-not-allowed",
-                  darkMode 
-                    ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400" 
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
-                )}
-              />
-              <div className={cn(
-                "absolute right-4 top-1/2 transform -translate-y-1/2",
-                darkMode ? "text-gray-400" : "text-gray-600"
-              )}>
-                {selectedWallet?.wallet_type}
-              </div>
-            </div>
+            ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400" 
+            : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+        )}
+      />
+      <div className={cn(
+        "absolute right-4 top-1/2 transform -translate-y-1/2",
+        darkMode ? "text-gray-400" : "text-gray-600"
+      )}>
+        {selectedWallet?.wallet_type}
+      </div>
+    </div>
 
-            {/* Balance Info */}
-            <p className="text-sm">
-              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                Available:{' '}
-              </span>
-              <span className={balance > 0 ? (darkMode ? "text-white" : "text-gray-900") : "text-red-400"}>
-                {formatBalance(selectedWallet?.balance, 2)} {selectedWallet?.wallet_type}
-              </span>
-            </p>
+    {/* Balance Info */}
+    <p className="text-sm">
+      <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+        Available:{' '}
+      </span>
+      <span className={balance > 0 ? (darkMode ? "text-white" : "text-gray-900") : "text-red-400"}>
+        {hideBalances ? '••••••' : `${formatBalance(selectedWallet?.balance, 2)} ${selectedWallet?.wallet_type}`}
+      </span>
+    </p>
 
-            {/* Zero Balance Warning */}
-            {balance === 0 && (
-              <div className="flex items-center space-x-2 text-sm text-orange-400">
-                <AlertTriangle className="w-4 h-4" />
-                <span>Insufficient balance. Deposit funds to send.</span>
-              </div>
-            )}
+    {/* Zero Balance Warning */}
+    {balance === 0 && (
+      <div className="flex items-center space-x-2 text-sm text-orange-400">
+        <AlertTriangle className="w-4 h-4" />
+        <span>Insufficient balance. Deposit funds to send.</span>
+      </div>
+    )}
 
-            {/* % Buttons */}
-            <div className="flex space-x-2">
-              {[25, 50, 75, 100].map((pct) => (
-                <Button
-                  key={pct}
-                  variant="outline"
-                  size="sm"
-                  disabled={!selectedWallet || balance === 0}
-                  className={cn(
-                    "disabled:opacity-50",
-                    darkMode 
-                      ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  )}
-                  onClick={() => {
-                    const val = (balance * (pct / 100)).toFixed(8);
-                    setAmount(val);
-                  }}
-                >
-                  {pct === 100 ? 'Max' : `${pct}%`}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
+    {/* % Buttons */}
+    <div className="flex space-x-2">
+      {[25, 50, 75, 100].map((pct) => (
+        <Button
+          key={pct}
+          variant="outline"
+          size="sm"
+          disabled={!selectedWallet || balance === 0}
+          className={cn(
+            "disabled:opacity-50",
+            darkMode 
+              ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+              : "border-gray-300 text-gray-700 hover:bg-gray-100"
+          )}
+          onClick={() => {
+            const val = (balance * (pct / 100)).toFixed(8);
+            setAmount(val);
+          }}
+        >
+          {pct === 100 ? 'Max' : `${pct}%`}
+        </Button>
+      ))}
+    </div>
+  </div>
+</div>
 
         {/* Network Fee */}
         <div className={cn(

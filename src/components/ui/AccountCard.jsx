@@ -14,7 +14,8 @@ const AccountCard = ({
   currentPrice,
   marketCapRank,
   coinIcon,
-  className 
+  className,
+  hideBalances 
 }) => {
   const { darkMode } = useDarkMode();
   const isPositive = change24h >= 0;
@@ -90,14 +91,14 @@ const AccountCard = ({
             "text-2xl font-bold mb-1",
             darkMode ? "text-white" : "text-gray-900"
           )}>
-            {balance.toLocaleString()} {coinSymbol}
+            {hideBalances ? '••••••' : balance.toLocaleString()} {coinSymbol}
           </p>
           <div className="flex items-baseline space-x-2">
             <p className={cn(
               "text-lg font-semibold",
               darkMode ? "text-gray-300" : "text-gray-700"
             )}>
-              ${fiatValue.toLocaleString("en-US", {
+              ${hideBalances ? '••••••' :fiatValue.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}

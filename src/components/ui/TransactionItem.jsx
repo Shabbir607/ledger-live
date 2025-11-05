@@ -19,6 +19,7 @@ const TransactionItem = ({
   address,
   hash,
   className,
+  hideBalances 
 }) => {
   const { darkMode } = useDarkMode();
   const isSend = type === "send";

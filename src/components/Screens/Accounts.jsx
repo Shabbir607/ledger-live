@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useDarkMode } from '../DarkModeContext';
-
+import { useHideBalances } from './useHideBalances';  
 // -------------------------------------------------------------------
 // CONFIG
 // -------------------------------------------------------------------
@@ -52,7 +52,7 @@ const Accounts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [hideSmall, setHideSmall] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
-
+ const [hideBalances, setHideBalances] = useHideBalances(); 
   // -----------------------------------------------------------------
   // FETCH DATA FROM YOUR /wallet ENDPOINT
   // -----------------------------------------------------------------
@@ -99,7 +99,21 @@ const Accounts = () => {
       setRefreshing(false);
     }
   };
+const formatBalance = (value, suffix = '') => {
+  if (hideBalances) return '••••••';
+  return `${value.toLocaleString('en-US', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
+  })} ${suffix}`;
+};
 
+const formatCurrency = (value) => {
+  if (hideBalances) return '••••••';
+  return `$${value.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
   useEffect(() => {
     fetchData();
   }, []);
@@ -159,111 +173,125 @@ const Accounts = () => {
       darkMode ? "bg-gray-900" : "bg-gray-50"
     )}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className={cn(
-            "text-3xl font-bold mb-2",
-            darkMode ? "text-white" : "text-gray-900"
-          )}>
-            My Wallets
-          </h1>
-          <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-            All your crypto in one place
-          </p>
-          {lastUpdated && (
-            <p className={cn(
-              "text-sm mt-1",
-              darkMode ? "text-gray-500" : "text-gray-500"
-            )}>
-              Updated: {lastUpdated.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
+    <div className="flex items-center justify-between">
+  <div>
+    <h1 className={cn(
+      "text-3xl font-bold mb-2",
+      darkMode ? "text-white" : "text-gray-900"
+    )}>
+      My Wallets
+    </h1>
+    <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+      All your crypto in one place
+    </p>
+    {lastUpdated && (
+      <p className={cn(
+        "text-sm mt-1",
+        darkMode ? "text-gray-500" : "text-gray-500"
+      )}>
+        Updated: {lastUpdated.toLocaleTimeString()}
+      </p>
+    )}
+  </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-              darkMode 
-                ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
-                : "border-gray-300 text-gray-700 hover:bg-gray-100"
-            )}
-          >
-            <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
-            <span>Refresh</span>
-          </button>
+  <div className="flex items-center space-x-3">
+    {/* Hide Balance Toggle Button */}
+    <button
+      onClick={() => setHideBalances(!hideBalances)}
+      className={cn(
+        "flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors",
+        darkMode 
+          ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+          : "border-gray-300 text-gray-700 hover:bg-gray-100"
+      )}
+    >
+      {hideBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+      <span>{hideBalances ? 'Show' : 'Hide'}</span>
+    </button>
 
-          <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Wallet
-          </Button>
-        </div>
-      </div>
+    <button
+      onClick={handleRefresh}
+      disabled={refreshing}
+      className={cn(
+        "flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+        darkMode 
+          ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+          : "border-gray-300 text-gray-700 hover:bg-gray-100"
+      )}
+    >
+      <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />
+      <span>Refresh</span>
+    </button>
+
+    <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+      <Plus className="w-4 h-4 mr-2" />
+      Add Wallet
+    </Button>
+  </div>
+</div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={cn(
-          "p-6 rounded-xl border",
-          darkMode 
-            ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
-            : "border-gray-200 bg-white shadow-sm"
-        )}>
-          <h3 className={cn(
-            "text-sm mb-2",
-            darkMode ? "text-gray-400" : "text-gray-600"
-          )}>
-            Total Portfolio Value
-          </h3>
-          <p className={cn(
-            "text-2xl font-bold",
-            darkMode ? "text-white" : "text-gray-900"
-          )}>
-            ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div className={cn(
+    "p-6 rounded-xl border",
+    darkMode 
+      ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
+      : "border-gray-200 bg-white shadow-sm"
+  )}>
+    <h3 className={cn(
+      "text-sm mb-2",
+      darkMode ? "text-gray-400" : "text-gray-600"
+    )}>
+      Total Portfolio Value
+    </h3>
+    <p className={cn(
+      "text-2xl font-bold",
+      darkMode ? "text-white" : "text-gray-900"
+    )}>
+      {formatCurrency(totalBalance)}
+    </p>
+  </div>
 
-        <div className={cn(
-          "p-6 rounded-xl border",
-          darkMode 
-            ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
-            : "border-gray-200 bg-white shadow-sm"
-        )}>
-          <h3 className={cn(
-            "text-sm mb-2",
-            darkMode ? "text-gray-400" : "text-gray-600"
-          )}>
-            Wallets
-          </h3>
-          <p className={cn(
-            "text-2xl font-bold",
-            darkMode ? "text-white" : "text-gray-900"
-          )}>
-            {wallets.length}
-          </p>
-        </div>
+  <div className={cn(
+    "p-6 rounded-xl border",
+    darkMode 
+      ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
+      : "border-gray-200 bg-white shadow-sm"
+  )}>
+    <h3 className={cn(
+      "text-sm mb-2",
+      darkMode ? "text-gray-400" : "text-gray-600"
+    )}>
+      Wallets
+    </h3>
+    <p className={cn(
+      "text-2xl font-bold",
+      darkMode ? "text-white" : "text-gray-900"
+    )}>
+      {wallets.length}
+    </p>
+  </div>
 
-        <div className={cn(
-          "p-6 rounded-xl border",
-          darkMode 
-            ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
-            : "border-gray-200 bg-white shadow-sm"
-        )}>
-          <h3 className={cn(
-            "text-sm mb-2",
-            darkMode ? "text-gray-400" : "text-gray-600"
-          )}>
-            24h Change
-          </h3>
-          <p className={cn(
-            "text-2xl font-bold",
-            darkMode ? "text-gray-300" : "text-gray-500"
-          )}>
-            —
-          </p>
-        </div>
-      </div>
+  <div className={cn(
+    "p-6 rounded-xl border",
+    darkMode 
+      ? "border-gray-800 bg-gradient-to-br from-gray-900/50 to-gray-800/30" 
+      : "border-gray-200 bg-white shadow-sm"
+  )}>
+    <h3 className={cn(
+      "text-sm mb-2",
+      darkMode ? "text-gray-400" : "text-gray-600"
+    )}>
+      24h Change
+    </h3>
+    <p className={cn(
+      "text-2xl font-bold",
+      darkMode ? "text-gray-300" : "text-gray-500"
+    )}>
+      —
+    </p>
+  </div>
+</div>
 
       {/* Search & Filters */}
       <div className="flex items-center justify-between">
@@ -287,17 +315,7 @@ const Accounts = () => {
             />
           </div>
 
-          {/* <Button 
-            variant="outline" 
-            className={cn(
-              darkMode 
-                ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
-                : "border-gray-300 text-gray-700 hover:bg-gray-100"
-            )}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button> */}
+          
         </div>
 
         <button
@@ -361,26 +379,14 @@ const Accounts = () => {
                       : "border-gray-200 hover:bg-gray-50"
                   )}
                 >
-                  <td className="p-4">
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={cn(
-                          'w-10 h-10 rounded-full bg-gradient-to-r flex items-center justify-center text-white font-bold text-sm',
-                          w.color
-                        )}
-                      >
-                        {w.icon}
-                      </div>
-                      <div>
-                        <p className={cn(
-                          "font-medium",
-                          darkMode ? "text-white" : "text-gray-900"
-                        )}>
-                          {w.type}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
+                 <td className="p-4">
+  <p className={cn(
+    "font-medium",
+    darkMode ? "text-white" : "text-gray-900"
+  )}>
+    {formatBalance(w.balance, w.type)}
+  </p>
+</td>
 
                   <td className="p-4">
                     <p className={cn(

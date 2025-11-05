@@ -18,13 +18,13 @@ import TransactionItem from "../ui/TransactionItem";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from '../DarkModeContext';
-
+import { useHideBalances } from './useHideBalances';
 const BASE_URL = "https://ledger.laptopindubai.com/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useDarkMode();
-
+const [hideBalances] = useHideBalances();
   // ────── STATE & HOOKS ──────
   const [walletData, setWalletData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -111,7 +111,13 @@ const Dashboard = () => {
 
     return points;
   }, [walletData]);
-
+const formatBalance = (value, prefix = '$') => {
+  if (hideBalances) return '••••••';
+  return `${prefix}${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
   const change24h = useMemo(() => {
     if (!walletData?.wallets) return 0;
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
@@ -417,13 +423,13 @@ const Dashboard = () => {
 
       {/* Portfolio Chart */}
       <div className="overflow-x-auto rounded-lg">
-        <PortfolioChart
-          data={portfolioData}
-          totalValue={totalUsdValue}
-          change24h={portfolio24hChange}
-          changePercent={(portfolio24hChange / totalUsdValue) * 100}
-          darkMode={darkMode}
-        />
+       <PortfolioChart
+  data={portfolioData}
+  totalValue={hideBalances ? 0 : totalUsdValue}
+  change24h={hideBalances ? 0 : portfolio24hChange}
+  changePercent={hideBalances ? 0 : (portfolio24hChange / totalUsdValue) * 100}
+  darkMode={darkMode}
+/>
       </div>
 
       {/* Main Content */}
@@ -439,9 +445,9 @@ const Dashboard = () => {
             </Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {accounts.map((a, i) => (
-              <AccountCard key={i} {...a} darkMode={darkMode} />
-            ))}
+           {accounts.map((a, i) => (
+  <AccountCard key={i} {...a} darkMode={darkMode} hideBalances={hideBalances} />
+))}
           </div>
         </div>
 
@@ -462,7 +468,7 @@ const Dashboard = () => {
                   key={i}
                   className={`rounded-lg border p-4 overflow-hidden ${darkMode ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-white shadow-sm'}`}
                 >
-                  <TransactionItem {...tx} darkMode={darkMode} />
+    <TransactionItem {...tx} darkMode={darkMode} hideBalances={hideBalances} />
                 </div>
               ))
             ) : (
@@ -485,12 +491,12 @@ const Dashboard = () => {
             )}
             <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>24h Change</span>
           </div>
-          <p className={`text-xl font-bold ${portfolio24hChange >= 0 ? "text-green-400" : "text-red-400"}`}>
-            {portfolio24hChange >= 0 ? "+" : ""}${portfolio24hChange.toFixed(2)}
-          </p>
-          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            {portfolio24hChange >= 0 ? "+" : ""}{((portfolio24hChange / totalUsdValue) * 100).toFixed(2)}%
-          </p>
+         <p className={`text-xl font-bold ${portfolio24hChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+  {hideBalances ? '••••••' : `${portfolio24hChange >= 0 ? "+" : ""}$${portfolio24hChange.toFixed(2)}`}
+</p>
+<p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+  {hideBalances ? '••••' : `${portfolio24hChange >= 0 ? "+" : ""}${((portfolio24hChange / totalUsdValue) * 100).toFixed(2)}%`}
+</p>
         </div>
 
         <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-white shadow-sm'}`}>
@@ -498,15 +504,12 @@ const Dashboard = () => {
             <div className="w-5 h-5 rounded-full bg-blue-500" />
             <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total USD Value</span>
           </div>
-          <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-            ${totalUsdValue.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </p>
-          <p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            {totalBalance.toFixed(2)} coins
-          </p>
+         <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+  {formatBalance(totalUsdValue)}
+</p>
+<p className={`text-xs mt-1 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+  {hideBalances ? '•••• coins' : `${totalBalance.toFixed(2)} coins`}
+</p>
         </div>
 
         <div className={`p-4 rounded-lg border ${darkMode ? 'border-gray-800 bg-gray-900/30' : 'border-gray-200 bg-white shadow-sm'}`}>

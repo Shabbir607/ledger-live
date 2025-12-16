@@ -1,34 +1,23 @@
-// electron/main.cjs
-const { app, BrowserWindow } = require('electron')
-const path = require('path')
-const fs = require('fs')
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1024,
     height: 768,
-icon: path.join(__dirname, '../assets/icon.ico'), // 👈 window icon
-
+    icon: path.join(__dirname, "../build/icon.ico"),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'), // optional
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
-      nodeIntegration: false,
-    }
-  })
+    },
+  });
 
-  // ✅ Works for dev AND packaged build
-  const indexHtml = path.join(__dirname, '..', 'dist', 'index.html')
-
-  if (fs.existsSync(indexHtml)) {
-    win.loadFile(indexHtml)
-  } else {
-    win.loadURL('data:text/html,<h1>⚠️ index.html not found</h1>')
-    console.error('❌ index.html not found at:', indexHtml)
-  }
+  const indexHtml = path.join(__dirname, "..", "dist", "index.html");
+  win.loadFile(indexHtml);
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});

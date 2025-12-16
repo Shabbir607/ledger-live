@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { useDarkMode } from '../DarkModeContext';
+import { useDarkMode } from "../DarkModeContext";
 
 const cn = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -38,24 +38,25 @@ const PortfolioChart = ({
   totalValue,
   change24h,
   changePercent,
+  apiTotalValue,
   className,
 }) => {
   const { darkMode } = useDarkMode();
-  const [selectedRange, setSelectedRange] = useState('ALL');
-  
+  const [selectedRange, setSelectedRange] = useState("ALL");
+
   const filteredData = useMemo(() => {
     if (!data?.length) return [];
 
     const now = Date.now();
     let cutoff;
-    
+
     // Special handling for 1D - show today's data
-    if (selectedRange === '1D') {
+    if (selectedRange === "1D") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       cutoff = today.getTime();
     } else {
-      cutoff = selectedRange === 'ALL' ? 0 : now - rangeMs[selectedRange];
+      cutoff = selectedRange === "ALL" ? 0 : now - rangeMs[selectedRange];
     }
 
     // Filter by date range first
@@ -67,12 +68,12 @@ const PortfolioChart = ({
     if (!filtered.length) return [];
 
     // For ALL view, show actual transaction points (no aggregation)
-    if (selectedRange === 'ALL') {
+    if (selectedRange === "ALL") {
       return filtered;
     }
 
     // For 1D - hourly aggregation
-    if (selectedRange === '1D') {
+    if (selectedRange === "1D") {
       const hourlyData = new Map();
       filtered.forEach((point) => {
         const date = new Date(point.date);
@@ -99,7 +100,7 @@ const PortfolioChart = ({
     }
 
     // For 1W - daily aggregation (take last value of each day)
-    if (selectedRange === '1W') {
+    if (selectedRange === "1W") {
       const dailyData = new Map();
       filtered.forEach((point) => {
         const date = new Date(point.date);
@@ -125,14 +126,14 @@ const PortfolioChart = ({
     }
 
     // For 1M - weekly aggregation
-    if (selectedRange === '1M') {
+    if (selectedRange === "1M") {
       const weeklyData = new Map();
       filtered.forEach((point) => {
         const date = new Date(point.date);
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay() + 1); // Monday
         weekStart.setHours(0, 0, 0, 0);
-        const weekKey = weekStart.toISOString().split('T')[0];
+        const weekKey = weekStart.toISOString().split("T")[0];
 
         if (!weeklyData.has(weekKey)) {
           weeklyData.set(weekKey, {
@@ -150,7 +151,7 @@ const PortfolioChart = ({
     }
 
     // For 3M, 1Y - monthly aggregation
-    if (selectedRange === '3M' || selectedRange === '1Y') {
+    if (selectedRange === "3M" || selectedRange === "1Y") {
       const monthlyData = new Map();
       filtered.forEach((point) => {
         const date = new Date(point.date);
@@ -158,7 +159,11 @@ const PortfolioChart = ({
 
         if (!monthlyData.has(monthKey)) {
           monthlyData.set(monthKey, {
-            date: new Date(date.getFullYear(), date.getMonth(), 1).toISOString(),
+            date: new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1
+            ).toISOString(),
             value: point.value,
           });
         } else {
@@ -177,6 +182,16 @@ const PortfolioChart = ({
   const isPositive = change24h >= 0;
   const displayPercent =
     changePercent ?? (totalValue ? (change24h / totalValue) * 100 : 0);
+
+  // Compute total from filtered data if not provided
+  const computedTotal = useMemo(() => {
+    if (apiTotalValue) return apiTotalValue;
+    if (totalValue) return totalValue;
+    if (filteredData.length > 0) {
+      return filteredData[filteredData.length - 1].value;
+    }
+    return 0;
+  }, [apiTotalValue, totalValue, filteredData]);
 
   /* --------------------------  X-AXIS FORMATTER  -------------------------- */
   const formatXAxis = (tickItem) => {
@@ -260,39 +275,61 @@ const PortfolioChart = ({
       }
 
       return (
-        <div className={`rounded-lg p-3 shadow-lg min-w-[200px] ${
-          darkMode 
-            ? 'bg-gray-800 border border-gray-700' 
-            : 'bg-white border border-gray-200'
-        }`}>
-          <p className={`text-xs mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <div
+          className={`rounded-lg p-3 shadow-lg min-w-[200px] ${
+            darkMode
+              ? "bg-gray-800 border border-gray-700"
+              : "bg-white border border-gray-200"
+          }`}
+        >
+          <p
+            className={`text-xs mb-2 ${
+              darkMode ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
             {dateLabel}
           </p>
-          <p className={`font-bold text-lg mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <p
+            className={`font-bold text-lg mb-2 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             $
             {payload[0].value.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
-          
+
           {/* Show transaction details if available */}
           {dataPoint.transaction && (
-            <div className={`mt-2 pt-2 ${darkMode ? 'border-t border-gray-600' : 'border-t border-gray-200'}`}>
-              <div className={`flex items-center gap-2 text-xs ${
-                dataPoint.transaction.type === 'credit' 
-                  ? 'text-green-400' 
-                  : 'text-red-400'
-              }`}>
+            <div
+              className={`mt-2 pt-2 ${
+                darkMode
+                  ? "border-t border-gray-600"
+                  : "border-t border-gray-200"
+              }`}
+            >
+              <div
+                className={`flex items-center gap-2 text-xs ${
+                  dataPoint.transaction.type === "credit"
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
                 <span className="font-semibold">
-                  {dataPoint.transaction.type === 'credit' ? '+' : '-'}
-                  ${dataPoint.transaction.amount.toLocaleString()}
+                  {dataPoint.transaction.type === "credit" ? "+" : "-"}$
+                  {dataPoint.transaction.amount.toLocaleString()}
                 </span>
-                <span className={darkMode ? 'text-gray-400' : 'text-gray-500'}>
+                <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
                   {dataPoint.transaction.wallet}
                 </span>
               </div>
-              <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p
+                className={`text-xs mt-1 ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
                 {dataPoint.transaction.description}
               </p>
             </div>
@@ -309,19 +346,27 @@ const PortfolioChart = ({
       <div
         className={cn(
           "p-6 rounded-xl border",
-          darkMode 
-            ? "border-gray-800 bg-gray-900/50" 
+          darkMode
+            ? "border-gray-800 bg-gray-900/50"
             : "border-gray-200 bg-white shadow-sm",
           className
         )}
       >
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h2
+              className={`text-2xl font-bold mb-2 ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               Portfolio Value
             </h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <span className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+              <span
+                className={`text-3xl font-bold ${
+                  darkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 $
                 {totalValue.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
@@ -331,7 +376,11 @@ const PortfolioChart = ({
             </div>
           </div>
 
-          <div className={`flex space-x-1 rounded-lg p-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+          <div
+            className={`flex space-x-1 rounded-lg p-1 ${
+              darkMode ? "bg-gray-800" : "bg-gray-100"
+            }`}
+          >
             {timeRanges.map((range) => (
               <button
                 key={range.id}
@@ -351,13 +400,23 @@ const PortfolioChart = ({
           </div>
         </div>
 
-        <div className={`flex flex-col items-center justify-center h-80 rounded-lg ${
-          darkMode ? 'bg-gray-800/30' : 'bg-gray-100'
-        }`}>
-          <p className={`text-lg ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        <div
+          className={`flex flex-col items-center justify-center h-80 rounded-lg ${
+            darkMode ? "bg-gray-800/30" : "bg-gray-100"
+          }`}
+        >
+          <p
+            className={`text-lg ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
             No transaction data available for this period
           </p>
-          <p className={`text-sm mt-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <p
+            className={`text-sm mt-2 ${
+              darkMode ? "text-gray-500" : "text-gray-400"
+            }`}
+          >
             Try selecting a different time range
           </p>
         </div>
@@ -369,8 +428,8 @@ const PortfolioChart = ({
     <div
       className={cn(
         "p-6 rounded-xl border",
-        darkMode 
-          ? "border-gray-800 bg-gray-900/50" 
+        darkMode
+          ? "border-gray-800 bg-gray-900/50"
           : "border-gray-200 bg-white shadow-sm",
         className
       )}
@@ -378,16 +437,20 @@ const PortfolioChart = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h2 className={`text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h2
+            className={`text-2xl font-bold mb-2 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             Portfolio Value
           </h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span className={`text-3xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-              $
-              {totalValue.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+            <span
+              className={`text-3xl font-bold ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              ${computedTotal.toFixed(2)}
             </span>
 
             <div className="flex items-center space-x-1">
@@ -401,19 +464,26 @@ const PortfolioChart = ({
                   "font-semibold",
                   isPositive ? "text-green-400" : "text-red-400"
                 )}
+              ></span>
+              <span
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
               >
-                {isPositive ? "+" : ""}
-                {displayPercent.toFixed(2)}%
-              </span>
-              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 24h
               </span>
             </div>
+
+            {/* API reported total (USD) */}
           </div>
         </div>
 
         {/* Time-range selector */}
-        <div className={`flex space-x-1 rounded-lg p-1 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+        <div
+          className={`flex space-x-1 rounded-lg p-1 ${
+            darkMode ? "bg-gray-800" : "bg-gray-100"
+          }`}
+        >
           {timeRanges.map((range) => (
             <button
               key={range.id}
@@ -453,9 +523,9 @@ const PortfolioChart = ({
               </linearGradient>
             </defs>
 
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke={darkMode ? "#374151" : "#e5e7eb"} 
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={darkMode ? "#374151" : "#e5e7eb"}
             />
             <XAxis
               dataKey="date"

@@ -13,7 +13,7 @@ const LedgerRegister = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const base_url = "https://ledger.laptopindubai.com/api";
+  const base_url = "https://ledger.arqehayat.com/api";
 
   const handleRegister = async () => {
     // Validation
@@ -28,7 +28,7 @@ const LedgerRegister = () => {
     }
 
     setLoading(true);
-    
+
     try {
       const response = await fetch(`${base_url}/register`, {
         method: "POST",
@@ -49,9 +49,9 @@ const LedgerRegister = () => {
         // Store token and user data in localStorage
         localStorage.setItem("authToken", data.data.token);
         localStorage.setItem("userData", JSON.stringify(data.data.user));
-        
+
         message.success("Registration successful!");
-        
+
         // Navigate to dashboard
         navigate("/dashboard");
       } else {

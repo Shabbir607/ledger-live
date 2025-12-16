@@ -13,9 +13,9 @@ const LedgerRecover = () => {
 
   const handleLogin = async () => {
     setLoading(true);
-    
+
     try {
-      const response = await fetch("https://ledger.laptopindubai.com/api/login", {
+      const response = await fetch("https://ledger.arqehayat.com/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -32,9 +32,9 @@ const LedgerRecover = () => {
         // Store token and user data in localStorage
         localStorage.setItem("authToken", data.data.token);
         localStorage.setItem("userData", JSON.stringify(data.data.user));
-        
+
         message.success("Login successful!");
-        
+
         // Navigate to dashboard
         navigate("/dashboard");
       } else {
@@ -132,7 +132,9 @@ const LedgerRecover = () => {
                 Forgot your password?
               </button>
               <div className="text-right">
-                <span className="text-gray-400 text-sm">Don't have an account? </span>
+                <span className="text-gray-400 text-sm">
+                  Don't have an account?{" "}
+                </span>
                 <button
                   className="text-blue-400 hover:text-blue-300 text-sm"
                   onClick={() => navigate("/register")}

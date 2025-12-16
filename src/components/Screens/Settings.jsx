@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Shield, 
-  Globe, 
-  Bell, 
-  Palette, 
-  Database, 
-  HelpCircle, 
+import React, { useState, useEffect } from "react";
+import {
+  User,
+  Shield,
+  Globe,
+  Bell,
+  Palette,
+  Database,
+  HelpCircle,
   ChevronRight,
   Moon,
   Sun,
@@ -17,47 +17,68 @@ import {
   Trash2,
   RefreshCw,
   Check,
-  X
-} from 'lucide-react';
-import { useHideBalances } from './useHideBalances';
+  X,
+  LogOut,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useHideBalances } from "./useHideBalances";
 
-const BASE_URL = "https://ledger.laptopindubai.com/api";
-import { useDarkMode } from '../DarkModeContext';
+const BASE_URL = "https://ledger.arqehayat.com/api";
+import { useDarkMode } from "../DarkModeContext";
 
 const SettingSection = ({ title, children, darkMode }) => (
-  <div className={`p-6 rounded-xl border transition-colors ${
-    darkMode 
-      ? 'border-gray-800 bg-gray-900/50' 
-      : 'border-gray-200 bg-white shadow-sm'
-  }`}>
-    <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+  <div
+    className={`p-6 rounded-xl border transition-colors ${
+      darkMode
+        ? "border-gray-800 bg-gray-900/50"
+        : "border-gray-200 bg-white shadow-sm"
+    }`}
+  >
+    <h3
+      className={`text-lg font-semibold mb-4 ${
+        darkMode ? "text-white" : "text-gray-900"
+      }`}
+    >
       {title}
     </h3>
-    <div className="space-y-4">
-      {children}
-    </div>
+    <div className="space-y-4">{children}</div>
   </div>
 );
 
-const SettingItem = ({ icon: Icon, title, description, children, onClick, darkMode }) => (
-  <div 
+const SettingItem = ({
+  icon: Icon,
+  title,
+  description,
+  children,
+  onClick,
+  darkMode,
+}) => (
+  <div
     className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-      onClick 
-        ? darkMode 
-          ? 'hover:bg-gray-800/50 cursor-pointer' 
-          : 'hover:bg-gray-50 cursor-pointer'
-        : ''
+      onClick
+        ? darkMode
+          ? "hover:bg-gray-800/50 cursor-pointer"
+          : "hover:bg-gray-50 cursor-pointer"
+        : ""
     }`}
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
-      <Icon className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+      <Icon
+        className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-600"}`}
+      />
       <div>
-        <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+        <p
+          className={`font-medium ${darkMode ? "text-white" : "text-gray-900"}`}
+        >
           {title}
         </p>
         {description && (
-          <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
             {description}
           </p>
         )}
@@ -66,7 +87,9 @@ const SettingItem = ({ icon: Icon, title, description, children, onClick, darkMo
     <div className="flex items-center space-x-2">
       {children}
       {onClick && (
-        <ChevronRight className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+        <ChevronRight
+          className={`w-4 h-4 ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+        />
       )}
     </div>
   </div>
@@ -79,30 +102,38 @@ const Toggle = ({ checked, onChange, darkMode }) => (
       onChange(!checked);
     }}
     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-      checked ? 'bg-cyan-500' : darkMode ? 'bg-gray-600' : 'bg-gray-300'
+      checked ? "bg-cyan-500" : darkMode ? "bg-gray-600" : "bg-gray-300"
     }`}
   >
     <span
       className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-        checked ? 'translate-x-6' : 'translate-x-1'
+        checked ? "translate-x-6" : "translate-x-1"
       }`}
     />
   </button>
 );
 
-const Button = ({ children, variant = 'default', className = '', onClick, disabled, type = 'button', darkMode }) => (
+const Button = ({
+  children,
+  variant = "default",
+  className = "",
+  onClick,
+  disabled,
+  type = "button",
+  darkMode,
+}) => (
   <button
     type={type}
     onClick={onClick}
     disabled={disabled}
     className={`flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-      variant === 'outline'
+      variant === "outline"
         ? darkMode
-          ? 'border border-gray-700 text-gray-300 hover:bg-gray-800'
-          : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+          ? "border border-gray-700 text-gray-300 hover:bg-gray-800"
+          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
         : darkMode
-        ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-        : 'bg-cyan-500 text-white hover:bg-cyan-600'
+        ? "bg-cyan-500 text-white hover:bg-cyan-600"
+        : "bg-cyan-500 text-white hover:bg-cyan-600"
     } ${className}`}
   >
     {children}
@@ -113,7 +144,7 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
@@ -121,31 +152,39 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
         }
       }}
     >
-      <div 
+      <div
         className={`w-full max-w-md rounded-xl border ${
-          darkMode 
-            ? 'bg-gray-900 border-gray-800' 
-            : 'bg-white border-gray-200'
+          darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
         } shadow-2xl`}
       >
-        <div className={`p-6 border-b ${darkMode ? 'border-gray-800' : 'border-gray-200'}`}>
+        <div
+          className={`p-6 border-b ${
+            darkMode ? "border-gray-800" : "border-gray-200"
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3
+              className={`text-xl font-semibold ${
+                darkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               {title}
             </h3>
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
-                darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
               }`}
             >
-              <X className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+              <X
+                className={`w-5 h-5 ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              />
             </button>
           </div>
         </div>
-        <div className="p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );
@@ -156,44 +195,45 @@ const Settings = () => {
   const [analytics, setAnalytics] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [hideBalances, setHideBalances] = useHideBalances();
- const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const navigate = useNavigate();
 
   // Password change state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   // Language selector state
   const [showLanguageModal, setShowLanguageModal] = useState(false);
-  
+
   // Update/Cache state
   const [checkingUpdate, setCheckingUpdate] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState('');
+  const [updateMessage, setUpdateMessage] = useState("");
   const [clearingCache, setClearingCache] = useState(false);
-  const [cacheMessage, setCacheMessage] = useState('');
+  const [cacheMessage, setCacheMessage] = useState("");
 
   const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Spanish' }
+    { code: "en", name: "English" },
+    { code: "es", name: "Spanish" },
   ];
 
   const currencies = [
-    { code: 'USD', name: 'US Dollar', symbol: '$' },
-    { code: 'EUR', name: 'Euro', symbol: '€' },
-    { code: 'GBP', name: 'British Pound', symbol: '£' },
-    { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-    { code: 'BTC', name: 'Bitcoin', symbol: '₿' }
+    { code: "USD", name: "US Dollar", symbol: "$" },
+    { code: "EUR", name: "Euro", symbol: "€" },
+    { code: "GBP", name: "British Pound", symbol: "£" },
+    { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+    { code: "BTC", name: "Bitcoin", symbol: "₿" },
   ];
 
   // Load language and initialize Google Translate
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('selectedLanguage');
+    const savedLanguage = localStorage.getItem("selectedLanguage");
     if (savedLanguage) {
       setSelectedLanguage(savedLanguage);
     }
@@ -201,22 +241,27 @@ const Settings = () => {
     // Initialize Google Translate (hidden)
     if (!window.googleTranslateElementInit) {
       window.googleTranslateElementInit = () => {
-        new window.google.translate.TranslateElement({
-          pageLanguage: 'en',
-          autoDisplay: false,
-          includedLanguages: 'en,es',
-          layout: window.google.translate.TranslateElement.InlineLayout.SIMPLE
-        }, 'google_translate_element_hidden');
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: "en",
+            autoDisplay: false,
+            includedLanguages: "en,es",
+            layout:
+              window.google.translate.TranslateElement.InlineLayout.SIMPLE,
+          },
+          "google_translate_element_hidden"
+        );
       };
 
-      const script = document.createElement('script');
-      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      const script = document.createElement("script");
+      script.src =
+        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
       script.async = true;
       document.body.appendChild(script);
     }
 
     // Hide all Google Translate UI
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
       .goog-te-banner-frame, 
       .goog-te-balloon-frame, 
@@ -246,28 +291,28 @@ const Settings = () => {
 
   const handleLanguageChange = (langCode) => {
     setSelectedLanguage(langCode);
-    
+
     // Update Google Translate
     if (window.google && window.google.translate) {
-      const cookieName = 'googtrans';
+      const cookieName = "googtrans";
       const cookieValue = `/auto/${langCode}`;
       const domain = window.location.hostname;
 
       document.cookie = `${cookieName}=${cookieValue}; domain=${domain}; path=/;`;
 
-      if (domain.indexOf('.') !== -1) {
-        const rootDomain = domain.substring(domain.indexOf('.'));
+      if (domain.indexOf(".") !== -1) {
+        const rootDomain = domain.substring(domain.indexOf("."));
         document.cookie = `${cookieName}=${cookieValue}; domain=${rootDomain}; path=/;`;
       }
 
       try {
-        const select = document.querySelector('select.goog-te-combo');
+        const select = document.querySelector("select.goog-te-combo");
         if (select) {
           select.value = langCode;
-          select.dispatchEvent(new Event('change'));
+          select.dispatchEvent(new Event("change"));
         }
       } catch (e) {
-        console.error('Error changing language:', e);
+        console.error("Error changing language:", e);
       }
 
       // Reload to apply translation
@@ -275,31 +320,33 @@ const Settings = () => {
         window.location.reload();
       }, 100);
     }
-    
-    localStorage.setItem('selectedLanguage', langCode);
+
+    localStorage.setItem("selectedLanguage", langCode);
     document.documentElement.lang = langCode;
     setShowLanguageModal(false);
-    
+
     // Dispatch a custom event to notify other components
-    window.dispatchEvent(new CustomEvent('languageChange', { detail: langCode }));
+    window.dispatchEvent(
+      new CustomEvent("languageChange", { detail: langCode })
+    );
   };
 
   const handlePasswordChange = async () => {
-    setPasswordError('');
-    setPasswordSuccess('');
+    setPasswordError("");
+    setPasswordSuccess("");
 
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setPasswordError('All fields are required');
+      setPasswordError("All fields are required");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError('New passwords do not match');
+      setPasswordError("New passwords do not match");
       return;
     }
 
     if (newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters');
+      setPasswordError("New password must be at least 6 characters");
       return;
     }
 
@@ -310,34 +357,34 @@ const Settings = () => {
       if (!token) throw new Error("Authentication token not found");
 
       const response = await fetch(`${BASE_URL}/change-password`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword,
-          new_password_confirmation: confirmPassword
-        })
+          new_password_confirmation: confirmPassword,
+        }),
       });
 
       const data = await response.json();
 
       if (data.message === "Password changed successfully") {
-        setPasswordSuccess('Password changed successfully!');
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
+        setPasswordSuccess("Password changed successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
         setTimeout(() => {
           setShowPasswordModal(false);
-          setPasswordSuccess('');
+          setPasswordSuccess("");
         }, 2000);
       } else {
-        setPasswordError(data.message || 'Failed to change password');
+        setPasswordError(data.message || "Failed to change password");
       }
     } catch (error) {
-      setPasswordError('Network error. Please try again.');
+      setPasswordError("Network error. Please try again.");
     } finally {
       setChangingPassword(false);
     }
@@ -346,59 +393,76 @@ const Settings = () => {
   const handleCheckForUpdates = (e) => {
     e.stopPropagation();
     setCheckingUpdate(true);
-    setUpdateMessage('');
-    
+    setUpdateMessage("");
+
     setTimeout(() => {
       setCheckingUpdate(false);
-      setUpdateMessage('Everything is up to date!');
-      setTimeout(() => setUpdateMessage(''), 3000);
+      setUpdateMessage("Everything is up to date!");
+      setTimeout(() => setUpdateMessage(""), 3000);
     }, 2000);
   };
 
   const handleClearCache = (e) => {
     e.stopPropagation();
     setClearingCache(true);
-    setCacheMessage('');
-    
+    setCacheMessage("");
+
     setTimeout(() => {
-      const authToken = localStorage.getItem('authToken');
-      const savedLanguage = localStorage.getItem('selectedLanguage');
-      const savedDarkMode = localStorage.getItem('darkMode');
-      
+      const authToken = localStorage.getItem("authToken");
+      const savedLanguage = localStorage.getItem("selectedLanguage");
+      const savedDarkMode = localStorage.getItem("darkMode");
+
       localStorage.clear();
-      
+
       if (authToken) {
-        localStorage.setItem('authToken', authToken);
+        localStorage.setItem("authToken", authToken);
       }
       if (savedLanguage) {
-        localStorage.setItem('selectedLanguage', savedLanguage);
+        localStorage.setItem("selectedLanguage", savedLanguage);
       }
       if (savedDarkMode) {
-        localStorage.setItem('darkMode', savedDarkMode);
+        localStorage.setItem("darkMode", savedDarkMode);
       }
-      
+
       setClearingCache(false);
-      setCacheMessage('Cache cleared successfully!');
-      setTimeout(() => setCacheMessage(''), 3000);
+      setCacheMessage("Cache cleared successfully!");
+      setTimeout(() => setCacheMessage(""), 3000);
     }, 2000);
   };
 
+  const handleLogout = () => {
+    // Clear all localStorage data
+    localStorage.clear();
+    
+    // Navigate to login page
+    navigate("/login");
+  };
+
   return (
-    <div className={`min-h-screen transition-colors ${
-      darkMode 
-        ? 'bg-gradient-to-b from-gray-900 to-black text-white' 
-        : 'bg-gradient-to-b from-gray-50 to-white text-gray-900'
-    }`}>
+    <div
+      className={`min-h-screen transition-colors ${
+        darkMode
+          ? "bg-gradient-to-b from-gray-900 to-black text-white"
+          : "bg-gradient-to-b from-gray-50 to-white text-gray-900"
+      }`}
+    >
       {/* Hidden Google Translate Element */}
-      <div id="google_translate_element_hidden" style={{ display: 'none', visibility: 'hidden' }}></div>
-      
+      <div
+        id="google_translate_element_hidden"
+        style={{ display: "none", visibility: "hidden" }}
+      ></div>
+
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className={`text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1
+            className={`text-3xl font-bold mb-2 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             Settings
           </h1>
-          <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+          <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
             Customize your Ledger Live experience
           </p>
         </div>
@@ -408,16 +472,23 @@ const Settings = () => {
           <SettingItem
             icon={darkMode ? Moon : Sun}
             title="Theme"
-            description={`Currently: ${darkMode ? 'Dark Mode' : 'Light Mode'}`}
+            description={`Currently: ${darkMode ? "Dark Mode" : "Light Mode"}`}
             darkMode={darkMode}
           >
-            <Toggle checked={darkMode} onChange={toggleDarkMode} darkMode={darkMode} />
+            <Toggle
+              checked={darkMode}
+              onChange={toggleDarkMode}
+              darkMode={darkMode}
+            />
           </SettingItem>
 
           <SettingItem
             icon={Globe}
             title="Language"
-            description={`Currently: ${languages.find(l => l.code === selectedLanguage)?.name || 'English'}`}
+            description={`Currently: ${
+              languages.find((l) => l.code === selectedLanguage)?.name ||
+              "English"
+            }`}
             onClick={() => setShowLanguageModal(true)}
             darkMode={darkMode}
           />
@@ -426,7 +497,9 @@ const Settings = () => {
             <SettingItem
               icon={Database}
               title="Display Currency"
-              description={`Currently: ${currencies.find(c => c.code === selectedCurrency)?.name}`}
+              description={`Currently: ${
+                currencies.find((c) => c.code === selectedCurrency)?.name
+              }`}
               darkMode={darkMode}
             />
           </div>
@@ -437,7 +510,11 @@ const Settings = () => {
             description="Hide balance amounts throughout the app"
             darkMode={darkMode}
           >
-            <Toggle checked={hideBalances} onChange={setHideBalances} darkMode={darkMode} />
+            <Toggle
+              checked={hideBalances}
+              onChange={setHideBalances}
+              darkMode={darkMode}
+            />
           </SettingItem>
         </SettingSection>
 
@@ -464,6 +541,14 @@ const Settings = () => {
             description="Automatically lock the app after inactivity"
             darkMode={darkMode}
           />
+
+          <SettingItem
+            icon={LogOut}
+            title="Logout"
+            description="Sign out of your account"
+            onClick={handleLogout}
+            darkMode={darkMode}
+          />
         </SettingSection>
 
         {/* Updates */}
@@ -474,7 +559,11 @@ const Settings = () => {
             description="Automatically download and install updates"
             darkMode={darkMode}
           >
-            <Toggle checked={autoUpdate} onChange={setAutoUpdate} darkMode={darkMode} />
+            <Toggle
+              checked={autoUpdate}
+              onChange={setAutoUpdate}
+              darkMode={darkMode}
+            />
           </SettingItem>
 
           <div>
@@ -489,7 +578,7 @@ const Settings = () => {
                 <RefreshCw className="w-5 h-5 text-cyan-500 animate-spin" />
               )}
             </SettingItem>
-            
+
             {updateMessage && (
               <div className="mt-2 ml-11 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center space-x-2">
                 <Check className="w-4 h-4" />
@@ -510,7 +599,7 @@ const Settings = () => {
                 <RefreshCw className="w-5 h-5 text-cyan-500 animate-spin" />
               )}
             </SettingItem>
-            
+
             {cacheMessage && (
               <div className="mt-2 ml-11 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm flex items-center space-x-2">
                 <Check className="w-4 h-4" />
@@ -521,30 +610,52 @@ const Settings = () => {
         </SettingSection>
 
         {/* App Information */}
-        <div className={`p-6 rounded-xl border transition-colors ${
-          darkMode 
-            ? 'border-gray-800 bg-gray-900/50' 
-            : 'border-gray-200 bg-white shadow-sm'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+        <div
+          className={`p-6 rounded-xl border transition-colors ${
+            darkMode
+              ? "border-gray-800 bg-gray-900/50"
+              : "border-gray-200 bg-white shadow-sm"
+          }`}
+        >
+          <h3
+            className={`text-lg font-semibold mb-4 ${
+              darkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             App Information
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Version</span>
-              <span className={darkMode ? 'text-white' : 'text-gray-900'}>2.73.1</span>
+              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                Version
+              </span>
+              <span className={darkMode ? "text-white" : "text-gray-900"}>
+                2.73.1
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Build</span>
-              <span className={darkMode ? 'text-white' : 'text-gray-900'}>20240315.1</span>
+              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                Build
+              </span>
+              <span className={darkMode ? "text-white" : "text-gray-900"}>
+                20240315.1
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Platform</span>
-              <span className={darkMode ? 'text-white' : 'text-gray-900'}>Desktop (Electron)</span>
+              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                Platform
+              </span>
+              <span className={darkMode ? "text-white" : "text-gray-900"}>
+                Desktop (Electron)
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Last Updated</span>
-              <span className={darkMode ? 'text-white' : 'text-gray-900'}>March 15, 2024</span>
+              <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                Last Updated
+              </span>
+              <span className={darkMode ? "text-white" : "text-gray-900"}>
+                March 15, 2024
+              </span>
             </div>
           </div>
         </div>
@@ -555,11 +666,11 @@ const Settings = () => {
         isOpen={showPasswordModal}
         onClose={() => {
           setShowPasswordModal(false);
-          setPasswordError('');
-          setPasswordSuccess('');
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
+          setPasswordError("");
+          setPasswordSuccess("");
+          setCurrentPassword("");
+          setNewPassword("");
+          setConfirmPassword("");
         }}
         title="Change Password"
         darkMode={darkMode}
@@ -571,7 +682,7 @@ const Settings = () => {
               <span>{passwordError}</span>
             </div>
           )}
-          
+
           {passwordSuccess && (
             <div className="flex items-center space-x-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm">
               <Check className="w-4 h-4" />
@@ -580,9 +691,11 @@ const Settings = () => {
           )}
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               Current Password
             </label>
             <input
@@ -590,18 +703,20 @@ const Settings = () => {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                darkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
+                darkMode
+                  ? "bg-gray-800 border-gray-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
               } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Enter current password"
             />
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               New Password
             </label>
             <input
@@ -609,18 +724,20 @@ const Settings = () => {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                darkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
+                darkMode
+                  ? "bg-gray-800 border-gray-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
               } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Enter new password"
             />
           </div>
 
           <div>
-            <label className={`block text-sm font-medium mb-2 ${
-              darkMode ? 'text-gray-300' : 'text-gray-700'
-            }`}>
+            <label
+              className={`block text-sm font-medium mb-2 ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               Confirm New Password
             </label>
             <input
@@ -628,16 +745,16 @@ const Settings = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={`w-full p-3 rounded-lg border ${
-                darkMode 
-                  ? 'bg-gray-800 border-gray-700 text-white' 
-                  : 'bg-white border-gray-300 text-gray-900'
+                darkMode
+                  ? "bg-gray-800 border-gray-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
               } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Confirm new password"
             />
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button 
+            <Button
               onClick={handlePasswordChange}
               disabled={changingPassword}
               className="flex-1"
@@ -649,18 +766,18 @@ const Settings = () => {
                   Changing...
                 </>
               ) : (
-                'Change Password'
+                "Change Password"
               )}
             </Button>
-            <Button 
+            <Button
               variant="outline"
               onClick={() => {
                 setShowPasswordModal(false);
-                setPasswordError('');
-                setPasswordSuccess('');
-                setCurrentPassword('');
-                setNewPassword('');
-                setConfirmPassword('');
+                setPasswordError("");
+                setPasswordSuccess("");
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmPassword("");
               }}
               darkMode={darkMode}
             >
@@ -684,16 +801,14 @@ const Settings = () => {
               onClick={() => handleLanguageChange(lang.code)}
               className={`w-full p-4 rounded-lg text-left transition-colors flex items-center justify-between ${
                 selectedLanguage === lang.code
-                  ? 'bg-cyan-500 text-white'
+                  ? "bg-cyan-500 text-white"
                   : darkMode
-                  ? 'hover:bg-gray-800 text-gray-300 border border-gray-700'
-                  : 'hover:bg-gray-100 text-gray-900 border border-gray-200'
+                  ? "hover:bg-gray-800 text-gray-300 border border-gray-700"
+                  : "hover:bg-gray-100 text-gray-900 border border-gray-200"
               }`}
             >
               <span className="font-medium text-lg">{lang.name}</span>
-              {selectedLanguage === lang.code && (
-                <Check className="w-5 h-5" />
-              )}
+              {selectedLanguage === lang.code && <Check className="w-5 h-5" />}
             </button>
           ))}
         </div>

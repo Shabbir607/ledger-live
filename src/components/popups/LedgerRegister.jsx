@@ -13,7 +13,7 @@ const LedgerRegister = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const base_url = "https://ledger.arqehayat.com/api";
+  const base_url = "http://127.0.0.1:8000/api";
 
   const handleRegister = async () => {
     // Validation

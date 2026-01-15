@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../DarkModeContext";
 import { useHideBalances } from "./useHideBalances";
-const BASE_URL = "https://ledger.arqehayat.com/api";
+const BASE_URL = "http://127.0.0.1:8000/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const Dashboard = () => {
   });
 
   // ────── HELPERS ──────
-  const parseBalance = (str) => parseFloat(str.replace(/,/g, "")) || 0;
+  const parseBalance = (str) => parseFloat(String(str || "0").replace(/,/g, "")) || 0;
 
   // ────── PORTFOLIO HISTORY ──────
   const portfolioData = useMemo(() => {
@@ -43,23 +43,35 @@ const Dashboard = () => {
     const allTxs = [];
     const balances = {};
 
-    walletData.wallets.forEach((w) => {
+    let walletsToProcess = walletData.wallets;
+
+    // If a filter is active, we might want to filter wallets. 
+    // However, the current filters ('swing', '3year', 'beginner') don't map clearly to wallet types.
+    // Assuming the user wants to see specific asset details when they "select" something.
+    // If the user means clicking on an AccountCard should filter the chart, we need that state.
+    // For now, I will fix the crash risk here too.
+
+    walletsToProcess.forEach((w) => {
       balances[w.wallet_type] = 0;
     });
 
-    walletData.wallets.forEach((w) => {
+    walletsToProcess.forEach((w) => {
       const txArray = Array.isArray(w.transactions)
         ? w.transactions
         : w.transactions
-        ? Object.values(w.transactions)
-        : [];
+          ? Object.values(w.transactions)
+          : [];
 
       txArray.forEach((tx) => {
-        const ts = Date.parse(tx.date || tx.created_at);
+        // Handle various date formats: ISO string, spacing, etc.
+        const dateStr = tx.date || tx.created_at;
+        const ts = new Date(dateStr).getTime();
+
         if (isNaN(ts)) {
-          // Skip transactions with invalid or missing dates to prevent RangeError
+          // console.warn("Invalid date found in transaction:", tx);
           return;
         }
+
         const amt = parseFloat(String(tx.amount || "0").replace(/,/g, ""));
         allTxs.push({
           ...tx,
@@ -145,8 +157,8 @@ const Dashboard = () => {
       const txArray = Array.isArray(w.transactions)
         ? w.transactions
         : w.transactions
-        ? Object.values(w.transactions)
-        : [];
+          ? Object.values(w.transactions)
+          : [];
 
       txArray.forEach((tx) => {
         if (new Date(tx.date || tx.created_at).getTime() > oneDayAgo) {
@@ -167,8 +179,8 @@ const Dashboard = () => {
       const txArray = Array.isArray(w.transactions)
         ? w.transactions
         : w.transactions
-        ? Object.values(w.transactions)
-        : [];
+          ? Object.values(w.transactions)
+          : [];
 
       txArray.slice(0, 4).forEach((tx) => {
         list.push({
@@ -211,8 +223,8 @@ const Dashboard = () => {
       const txArray = Array.isArray(w.transactions)
         ? w.transactions
         : w.transactions
-        ? Object.values(w.transactions)
-        : [];
+          ? Object.values(w.transactions)
+          : [];
 
       txArray.forEach((tx) => {
         const txDate = new Date(tx.date || tx.created_at).getTime();
@@ -244,7 +256,7 @@ const Dashboard = () => {
           marketCapRank: w.market_data?.market_cap_rank || 0,
           coinIcon:
             { BTC: "₿", ETH: "Ξ", USDT: "₮", SOL: "◎", BNB: "⬡" }[
-              w.wallet_type
+            w.wallet_type
             ] || "●",
         };
       }) ?? [],
@@ -312,17 +324,15 @@ const Dashboard = () => {
     return (
       <div className="flex items-center justify-center h-screen">
         <div
-          className={`text-center max-w-md mx-auto p-6 rounded-lg border ${
-            darkMode
-              ? "border-red-500/50 bg-red-500/10"
-              : "border-red-500/20 bg-red-50 shadow-sm"
-          }`}
+          className={`text-center max-w-md mx-auto p-6 rounded-lg border ${darkMode
+            ? "border-red-500/50 bg-red-500/10"
+            : "border-red-500/20 bg-red-50 shadow-sm"
+            }`}
         >
           <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <h2
-            className={`text-xl font-semibold ${
-              darkMode ? "text-white" : "text-gray-900"
-            } mb-2`}
+            className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"
+              } mb-2`}
           >
             Error
           </h2>
@@ -344,11 +354,10 @@ const Dashboard = () => {
   // ────── MAIN RENDER ──────
   return (
     <div
-      className={`space-y-6 w-full py-6 max-w-screen-2xl mx-auto px-4 transition-colors ${
-        darkMode
-          ? "bg-gradient-to-b from-gray-900 to-black text-white"
-          : "bg-gradient-to-b from-gray-50 to-white text-gray-900"
-      }`}
+      className={`space-y-6 w-full py-6 max-w-screen-2xl mx-auto px-4 transition-colors ${darkMode
+        ? "bg-gradient-to-b from-gray-900 to-black text-white"
+        : "bg-gradient-to-b from-gray-50 to-white text-gray-900"
+        }`}
     >
       {/* Action Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -358,41 +367,36 @@ const Dashboard = () => {
               filter: activeFilters.filter === "swing" ? null : "swing",
             })
           }
-          className={`p-6 rounded-xl border transition-all text-left w-full ${
-            activeFilters.filter === "swing"
-              ? darkMode
-                ? "border-cyan-500 bg-gray-800/50"
-                : "border-cyan-500 bg-white shadow-md"
-              : darkMode
+          className={`p-6 rounded-xl border transition-all text-left w-full ${activeFilters.filter === "swing"
+            ? darkMode
+              ? "border-cyan-500 bg-gray-800/50"
+              : "border-cyan-500 bg-white shadow-md"
+            : darkMode
               ? "border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40"
               : "border-gray-200 bg-white hover:bg-gray-50 shadow-sm"
-          }`}
+            }`}
         >
           <div className="flex items-start space-x-4">
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
+                }`}
             >
               <DollarSign
-                className={`w-6 h-6 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               />
             </div>
 
             <div className="flex-1">
               <h3
-                className={`text-lg font-semibold ${
-                  darkMode ? "text-white" : "text-gray-900"
-                } mb-1`}
+                className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}
               >
                 Buy / Sell
               </h3>
               <p
-                className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                } mb-3`}
+                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                  } mb-3`}
               >
                 Buy and sell with trusted providers
               </p>
@@ -413,11 +417,10 @@ const Dashboard = () => {
                     e.stopPropagation();
                     navigate("/send");
                   }}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                    darkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
-                      : "bg-gray-200 hover:bg-gray-300 text-gray-900"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg ${darkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+                    }`}
                 >
                   Sell
                 </button>
@@ -432,51 +435,45 @@ const Dashboard = () => {
               filter: activeFilters.filter === "3year" ? null : "3year",
             })
           }
-          className={`p-6 rounded-xl border transition-all text-left ${
-            activeFilters.filter === "3year"
-              ? darkMode
-                ? "border-purple-500 bg-gray-800/50"
-                : "border-purple-500 bg-white shadow-md"
-              : darkMode
+          className={`p-6 rounded-xl border transition-all text-left ${activeFilters.filter === "3year"
+            ? darkMode
+              ? "border-purple-500 bg-gray-800/50"
+              : "border-purple-500 bg-white shadow-md"
+            : darkMode
               ? "border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40"
               : "border-gray-200 bg-white hover:bg-gray-50 shadow-sm"
-          }`}
+            }`}
         >
           <div className="flex items-start space-x-4">
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
+                }`}
             >
               <Repeat
-                className={`w-6 h-6 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               />
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-2 mb-1">
                 <h3
-                  className={`text-lg font-semibold ${
-                    darkMode ? "text-white" : "text-gray-900"
-                  }`}
+                  className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                    }`}
                 >
                   Swap
                 </h3>
                 <span
-                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                    darkMode
-                      ? "bg-purple-500/20 text-purple-300"
-                      : "bg-purple-500/10 text-purple-700"
-                  }`}
+                  className={`px-2 py-0.5 text-xs font-medium rounded-full ${darkMode
+                    ? "bg-purple-500/20 text-purple-300"
+                    : "bg-purple-500/10 text-purple-700"
+                    }`}
                 >
                   Popular
                 </span>
               </div>
               <p
-                className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
               >
                 Convert crypto to crypto securely
               </p>
@@ -490,40 +487,35 @@ const Dashboard = () => {
               filter: activeFilters.filter === "beginner" ? null : "beginner",
             })
           }
-          className={`p-6 rounded-xl border transition-all text-left ${
-            activeFilters.filter === "beginner"
-              ? darkMode
-                ? "border-green-500 bg-gray-800/50"
-                : "border-green-500 bg-white shadow-md"
-              : darkMode
+          className={`p-6 rounded-xl border transition-all text-left ${activeFilters.filter === "beginner"
+            ? darkMode
+              ? "border-green-500 bg-gray-800/50"
+              : "border-green-500 bg-white shadow-md"
+            : darkMode
               ? "border-gray-700/50 bg-gray-800/30 hover:bg-gray-800/40"
               : "border-gray-200 bg-white hover:bg-gray-50 shadow-sm"
-          }`}
+            }`}
         >
           <div className="flex items-start space-x-4">
             <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
-              }`}
+              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${darkMode ? "bg-gray-700/50" : "bg-gray-200/50"
+                }`}
             >
               <Layers
-                className={`w-6 h-6 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`w-6 h-6 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               />
             </div>
             <div>
               <h3
-                className={`text-lg font-semibold ${
-                  darkMode ? "text-white" : "text-gray-900"
-                } mb-1`}
+                className={`text-lg font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                  } mb-1`}
               >
                 Stake
               </h3>
               <p
-                className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
               >
                 Grow your crypto Live
               </p>
@@ -536,16 +528,14 @@ const Dashboard = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1
-            className={`text-xl sm:text-2xl md:text-3xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            } mb-1`}
+            className={`text-xl sm:text-2xl md:text-3xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+              } mb-1`}
           >
             Portfolio
           </h1>
           <p
-            className={`${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            } text-sm sm:text-base`}
+            className={`${darkMode ? "text-gray-400" : "text-gray-500"
+              } text-sm sm:text-base`}
           >
             Welcome back, {walletData?.user?.name || "User"}!
           </p>
@@ -555,11 +545,10 @@ const Dashboard = () => {
           <Button
             variant="outline"
             onClick={fetchData}
-            className={`${
-              darkMode
-                ? "border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
-            } flex-1 sm:flex-none`}
+            className={`${darkMode
+              ? "border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+              } flex-1 sm:flex-none`}
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Sync
@@ -592,11 +581,10 @@ const Dashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div
-          className={`p-4 rounded-lg border ${
-            darkMode
-              ? "border-gray-800 bg-gray-900/30"
-              : "border-gray-200 bg-white shadow-sm"
-          }`}
+          className={`p-4 rounded-lg border ${darkMode
+            ? "border-gray-800 bg-gray-900/30"
+            : "border-gray-200 bg-white shadow-sm"
+            }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             {portfolio24hChange >= 0 ? (
@@ -605,92 +593,81 @@ const Dashboard = () => {
               <TrendingDown className="w-5 h-5 text-red-400" />
             )}
             <span
-              className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
             >
               24h Change
             </span>
           </div>
           <p
-            className={`text-xl font-bold ${
-              portfolio24hChange >= 0 ? "text-green-400" : "text-red-400"
-            }`}
+            className={`text-xl font-bold ${portfolio24hChange >= 0 ? "text-green-400" : "text-red-400"
+              }`}
           >
             {hideBalances
               ? "••••••"
-              : `${
-                  portfolio24hChange >= 0 ? "+" : ""
-                }$${portfolio24hChange.toFixed(2)}`}
+              : `${portfolio24hChange >= 0 ? "+" : ""
+              }$${portfolio24hChange.toFixed(2)}`}
           </p>
           <p
-            className={`text-xs mt-1 ${
-              darkMode ? "text-gray-500" : "text-gray-400"
-            }`}
+            className={`text-xs mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"
+              }`}
           >
             {hideBalances
               ? "••••"
               : `${portfolio24hChange >= 0 ? "+" : ""}${(
-                  (portfolio24hChange / totalUsdValue) *
-                  100
-                ).toFixed(2)}%`}
+                (portfolio24hChange / totalUsdValue) *
+                100
+              ).toFixed(2)}%`}
           </p>
         </div>
 
         <div
-          className={`p-4 rounded-lg border ${
-            darkMode
-              ? "border-gray-800 bg-gray-900/30"
-              : "border-gray-200 bg-white shadow-sm"
-          }`}
+          className={`p-4 rounded-lg border ${darkMode
+            ? "border-gray-800 bg-gray-900/30"
+            : "border-gray-200 bg-white shadow-sm"
+            }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-5 h-5 rounded-full bg-blue-500" />
             <span
-              className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
             >
               Total USD Value
             </span>
           </div>
           <p
-            className={`text-xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             {formatBalance(totalUsdValue)}
           </p>
           <p
-            className={`text-xs mt-1 ${
-              darkMode ? "text-gray-500" : "text-gray-400"
-            }`}
+            className={`text-xs mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"
+              }`}
           >
             {hideBalances ? "•••• coins" : `${totalBalance.toFixed(2)} coins`}
           </p>
         </div>
 
         <div
-          className={`p-4 rounded-lg border ${
-            darkMode
-              ? "border-gray-800 bg-gray-900/30"
-              : "border-gray-200 bg-white shadow-sm"
-          }`}
+          className={`p-4 rounded-lg border ${darkMode
+            ? "border-gray-800 bg-gray-900/30"
+            : "border-gray-200 bg-white shadow-sm"
+            }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-5 h-5 rounded-full bg-purple-500" />
             <span
-              className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
             >
               Transactions
             </span>
           </div>
           <p
-            className={`text-xl font-bold ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             {walletData.wallets.reduce(
               (s, w) => s + (w.transactions?.length || 0),
@@ -700,18 +677,16 @@ const Dashboard = () => {
         </div>
 
         <div
-          className={`p-4 rounded-lg border ${
-            darkMode
-              ? "border-gray-800 bg-gray-900/30"
-              : "border-gray-200 bg-white shadow-sm"
-          }`}
+          className={`p-4 rounded-lg border ${darkMode
+            ? "border-gray-800 bg-gray-900/30"
+            : "border-gray-200 bg-white shadow-sm"
+            }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-5 h-5 rounded-full bg-cyan-500" />
             <span
-              className={`text-sm ${
-                darkMode ? "text-gray-400" : "text-gray-500"
-              }`}
+              className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                }`}
             >
               Active Wallets
             </span>
@@ -728,9 +703,8 @@ const Dashboard = () => {
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2
-              className={`text-lg sm:text-xl font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}
+              className={`text-lg sm:text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                }`}
             >
               Your Wallets
             </h2>
@@ -757,9 +731,8 @@ const Dashboard = () => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2
-              className={`text-lg sm:text-xl font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}
+              className={`text-lg sm:text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                }`}
             >
               Recent Activity
             </h2>
@@ -783,9 +756,8 @@ const Dashboard = () => {
               ))
             ) : (
               <div
-                className={`text-center py-8 ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                className={`text-center py-8 ${darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
               >
                 <p>No recent transactions</p>
               </div>

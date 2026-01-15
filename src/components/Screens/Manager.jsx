@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 const Manager = () => {
   const { darkMode } = useDarkMode();
   const BASE_URL =
-    import.meta.env.VITE_BASE_URL || "https://ledger.arqehayat.com";
+    import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000/";
 
   // ──────────────────────────────────────────────────────────────────────
   // STATE
@@ -98,7 +98,7 @@ const Manager = () => {
     setError(null);
 
     try {
-      const res = await fetch(`${BASE_URL}/api/wallet/balance`, {
+      const res = await fetch(`${BASE_URL}api/wallet/balance`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -591,8 +591,8 @@ const Manager = () => {
                 selectedTab === "installed"
                   ? "bg-cyan-500 text-white"
                   : darkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+                    ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
               )}
             >
               Active ({installedWallets.length})
@@ -604,8 +604,8 @@ const Manager = () => {
                 selectedTab === "available"
                   ? "bg-cyan-500 text-white"
                   : darkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+                    ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
               )}
             >
               Create New ({availableWallets.length})

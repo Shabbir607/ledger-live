@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 const Login = () => {
   const navigate = useNavigate();
   const [loginMethod, setLoginMethod] = useState("password");
+  const [email, setEmail] = useState("admin@example.com"); // Default for convenience
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -27,17 +28,55 @@ const Login = () => {
     setIsAuthenticating(true);
     setAuthError("");
 
-    // Simulate authentication
-    setTimeout(() => {
-      if (loginMethod === "password" && password.length < 6) {
-        setAuthError("Password must be at least 6 characters");
-        setIsAuthenticating(false);
-        return;
+    if (loginMethod === "password" && password.length < 6) {
+      setAuthError("Password must be at least 6 characters");
+      setIsAuthenticating(false);
+      return;
+    }
+
+    try {
+      // Use import.meta.env.VITE_BASE_URL if available, otherwise default
+      const BASE_URL = import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000/api";
+
+      // Hardcoded email for now since UI doesn't have email input in this specific design file?
+      // Wait, the UI only has Password input in the screenshot/code? 
+      // Line 152: input type="password". 
+      // WHERE IS THE EMAIL INPUT? 
+      // The user previously said "login as teacher". The design might be assuming a selected user or a single user flow?
+      // OR, I missed the email input in the code.
+      // Looking at line 146-192: Only Password input is visible.
+      // This login screen seems to be a "Unlock" screen or "Welcome Back" screen.
+      // IF the user is not stored, we need an email.
+      // For now, I will add an Email input field to make it functional.
+
+      const response = await fetch(`${BASE_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email, // Temporary default or need input
+          password: password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
       }
 
-      // Successful login - now just navigate
-      navigate("/dashboard");
-    }, 2000);
+      if (data.success && data.data.token) {
+        localStorage.setItem("authToken", data.data.token);
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+        navigate("/dashboard");
+      } else {
+        throw new Error("Invalid response from server");
+      }
+
+    } catch (err) {
+      setAuthError(err.message);
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const handleBiometricLogin = () => {
@@ -106,27 +145,24 @@ const Login = () => {
               <button
                 key={method.id}
                 onClick={() => setLoginMethod(method.id)}
-                className={`w-full p-4 rounded-lg border transition-all duration-200 text-left ${
-                  loginMethod === method.id
-                    ? "border-cyan-500 bg-cyan-500/10"
-                    : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                }`}
+                className={`w-full p-4 rounded-lg border transition-all duration-200 text-left ${loginMethod === method.id
+                  ? "border-cyan-500 bg-cyan-500/10"
+                  : "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                  }`}
               >
                 <div className="flex items-center space-x-3">
                   <Icon
-                    className={`w-5 h-5 ${
-                      loginMethod === method.id
-                        ? "text-cyan-400"
-                        : "text-gray-400"
-                    }`}
+                    className={`w-5 h-5 ${loginMethod === method.id
+                      ? "text-cyan-400"
+                      : "text-gray-400"
+                      }`}
                   />
                   <div>
                     <span
-                      className={`font-medium block ${
-                        loginMethod === method.id
-                          ? "text-cyan-400"
-                          : "text-white"
-                      }`}
+                      className={`font-medium block ${loginMethod === method.id
+                        ? "text-cyan-400"
+                        : "text-white"
+                        }`}
                     >
                       {method.name}
                     </span>
@@ -144,6 +180,21 @@ const Login = () => {
         <div className="space-y-6">
           {loginMethod === "password" && (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  // We need state for email. I'll add it in next step or use defaults if strict.
+                  // But wait, I can't add state variable in this Replace block cleanly if I don't target the top of file.
+                  // I will target top of file in next step. For now, let's just add the input that assumes 'email' state exists.
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">
                   Password

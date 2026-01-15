@@ -17,7 +17,7 @@ import { useDarkMode } from "../DarkModeContext";
 import { useHideBalances } from "./useHideBalances";
 
 const BASE_URL =
-  import.meta.env.VITE_BASE_URL || "https://ledger.arqehayat.com";
+  import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000/";
 
 const Send = () => {
   const { darkMode } = useDarkMode();
@@ -78,7 +78,7 @@ const Send = () => {
 
         setLoading(true);
         setError("");
-        const response = await fetch(`${BASE_URL}/api/wallet/balance`, {
+        const response = await fetch(`${BASE_URL}api/wallet/balance`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -132,7 +132,7 @@ const Send = () => {
       const token = localStorage.getItem("authToken");
       if (!token)
         throw new Error("Authentication token not found. Please log in.");
-      const response = await fetch(`${BASE_URL}/api/wallet/send`, {
+      const response = await fetch(`${BASE_URL}api/wallet/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -152,7 +152,7 @@ const Send = () => {
         setMemo("");
 
         // Refresh wallets after successful send
-        const refreshResponse = await fetch(`${BASE_URL}/api/wallet/balance`, {
+        const refreshResponse = await fetch(`${BASE_URL}api/wallet/balance`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -591,8 +591,8 @@ const Send = () => {
                         isDisabled
                           ? "opacity-50 cursor-not-allowed"
                           : darkMode
-                          ? "hover:bg-gray-700"
-                          : "hover:bg-gray-50"
+                            ? "hover:bg-gray-700"
+                            : "hover:bg-gray-50"
                       )}
                     >
                       <div
@@ -610,8 +610,8 @@ const Send = () => {
                             isDisabled
                               ? "text-gray-500"
                               : darkMode
-                              ? "text-white"
-                              : "text-gray-900"
+                                ? "text-white"
+                                : "text-gray-900"
                           )}
                         >
                           {wallet.wallet_type}
@@ -744,9 +744,8 @@ const Send = () => {
               >
                 {hideBalances
                   ? "••••••"
-                  : `${formatBalance(selectedWallet?.balance, 2)} ${
-                      selectedWallet?.wallet_type
-                    }`}
+                  : `${formatBalance(selectedWallet?.balance, 2)} ${selectedWallet?.wallet_type
+                  }`}
               </span>
             </p>
 
@@ -811,8 +810,8 @@ const Send = () => {
                   feeLevel === option.id
                     ? "border-cyan-500 bg-cyan-500/10"
                     : darkMode
-                    ? "border-gray-700 bg-gray-800/50 hover:border-gray-600"
-                    : "border-gray-300 bg-gray-50 hover:border-gray-400"
+                      ? "border-gray-700 bg-gray-800/50 hover:border-gray-600"
+                      : "border-gray-300 bg-gray-50 hover:border-gray-400"
                 )}
               >
                 <div className="flex items-center space-x-3">

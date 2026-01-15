@@ -22,22 +22,21 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useHideBalances } from "./useHideBalances";
-
-const BASE_URL = "https://ledger.arqehayat.com/api";
+import { useTranslation } from "../../contexts/TranslationContext";
 import { useDarkMode } from "../DarkModeContext";
+
+const BASE_URL = "http://127.0.0.1:8000/api";
 
 const SettingSection = ({ title, children, darkMode }) => (
   <div
-    className={`p-6 rounded-xl border transition-colors ${
-      darkMode
-        ? "border-gray-800 bg-gray-900/50"
-        : "border-gray-200 bg-white shadow-sm"
-    }`}
+    className={`p-6 rounded-xl border transition-colors ${darkMode
+      ? "border-gray-800 bg-gray-900/50"
+      : "border-gray-200 bg-white shadow-sm"
+      }`}
   >
     <h3
-      className={`text-lg font-semibold mb-4 ${
-        darkMode ? "text-white" : "text-gray-900"
-      }`}
+      className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-gray-900"
+        }`}
     >
       {title}
     </h3>
@@ -54,13 +53,12 @@ const SettingItem = ({
   darkMode,
 }) => (
   <div
-    className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-      onClick
-        ? darkMode
-          ? "hover:bg-gray-800/50 cursor-pointer"
-          : "hover:bg-gray-50 cursor-pointer"
-        : ""
-    }`}
+    className={`flex items-center justify-between p-3 rounded-lg transition-colors ${onClick
+      ? darkMode
+        ? "hover:bg-gray-800/50 cursor-pointer"
+        : "hover:bg-gray-50 cursor-pointer"
+      : ""
+      }`}
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
@@ -75,9 +73,8 @@ const SettingItem = ({
         </p>
         {description && (
           <p
-            className={`text-sm ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
+            className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+              }`}
           >
             {description}
           </p>
@@ -101,14 +98,12 @@ const Toggle = ({ checked, onChange, darkMode }) => (
       e.stopPropagation();
       onChange(!checked);
     }}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-      checked ? "bg-cyan-500" : darkMode ? "bg-gray-600" : "bg-gray-300"
-    }`}
+    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-cyan-500" : darkMode ? "bg-gray-600" : "bg-gray-300"
+      }`}
   >
     <span
-      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-        checked ? "translate-x-6" : "translate-x-1"
-      }`}
+      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? "translate-x-6" : "translate-x-1"
+        }`}
     />
   </button>
 );
@@ -126,15 +121,14 @@ const Button = ({
     type={type}
     onClick={onClick}
     disabled={disabled}
-    className={`flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-      variant === "outline"
-        ? darkMode
-          ? "border border-gray-700 text-gray-300 hover:bg-gray-800"
-          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-        : darkMode
+    className={`flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${variant === "outline"
+      ? darkMode
+        ? "border border-gray-700 text-gray-300 hover:bg-gray-800"
+        : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+      : darkMode
         ? "bg-cyan-500 text-white hover:bg-cyan-600"
         : "bg-cyan-500 text-white hover:bg-cyan-600"
-    } ${className}`}
+      } ${className}`}
   >
     {children}
   </button>
@@ -153,33 +147,28 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
       }}
     >
       <div
-        className={`w-full max-w-md rounded-xl border ${
-          darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
-        } shadow-2xl`}
+        className={`w-full max-w-md rounded-xl border ${darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
+          } shadow-2xl`}
       >
         <div
-          className={`p-6 border-b ${
-            darkMode ? "border-gray-800" : "border-gray-200"
-          }`}
+          className={`p-6 border-b ${darkMode ? "border-gray-800" : "border-gray-200"
+            }`}
         >
           <div className="flex items-center justify-between">
             <h3
-              className={`text-xl font-semibold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}
+              className={`text-xl font-semibold ${darkMode ? "text-white" : "text-gray-900"
+                }`}
             >
               {title}
             </h3>
             <button
               onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${
-                darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
-              }`}
+              className={`p-2 rounded-lg transition-colors ${darkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                }`}
             >
               <X
-                className={`w-5 h-5 ${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                }`}
+                className={`w-5 h-5 ${darkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
               />
             </button>
           </div>
@@ -191,11 +180,11 @@ const Modal = ({ isOpen, onClose, title, children, darkMode }) => {
 };
 
 const Settings = () => {
+  const { t, locale, changeLanguage } = useTranslation();
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [autoUpdate, setAutoUpdate] = useState(true);
   const [hideBalances, setHideBalances] = useHideBalances();
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
@@ -231,104 +220,9 @@ const Settings = () => {
     { code: "BTC", name: "Bitcoin", symbol: "₿" },
   ];
 
-  // Load language and initialize Google Translate
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("selectedLanguage");
-    if (savedLanguage) {
-      setSelectedLanguage(savedLanguage);
-    }
-
-    // Initialize Google Translate (hidden)
-    if (!window.googleTranslateElementInit) {
-      window.googleTranslateElementInit = () => {
-        new window.google.translate.TranslateElement(
-          {
-            pageLanguage: "en",
-            autoDisplay: false,
-            includedLanguages: "en,es",
-            layout:
-              window.google.translate.TranslateElement.InlineLayout.SIMPLE,
-          },
-          "google_translate_element_hidden"
-        );
-      };
-
-      const script = document.createElement("script");
-      script.src =
-        "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    // Hide all Google Translate UI
-    const style = document.createElement("style");
-    style.textContent = `
-      .goog-te-banner-frame, 
-      .goog-te-balloon-frame, 
-      #goog-gt-tt, 
-      .goog-te-bubble-frame, 
-      .goog-tooltip, 
-      .skiptranslate,
-      .goog-te-gadget-icon,
-      .VIpgJd-ZVi9od-l4eHX-hSRGPd,
-      #google_translate_element_hidden {
-        display: none !important;
-        visibility: hidden !important;
-      }
-      
-      body {
-        top: 0 !important;
-        position: static !important;
-      }
-      
-      .goog-text-highlight {
-        background-color: transparent !important;
-        box-shadow: none !important;
-      }
-    `;
-    document.head.appendChild(style);
-  }, []);
-
   const handleLanguageChange = (langCode) => {
-    setSelectedLanguage(langCode);
-
-    // Update Google Translate
-    if (window.google && window.google.translate) {
-      const cookieName = "googtrans";
-      const cookieValue = `/auto/${langCode}`;
-      const domain = window.location.hostname;
-
-      document.cookie = `${cookieName}=${cookieValue}; domain=${domain}; path=/;`;
-
-      if (domain.indexOf(".") !== -1) {
-        const rootDomain = domain.substring(domain.indexOf("."));
-        document.cookie = `${cookieName}=${cookieValue}; domain=${rootDomain}; path=/;`;
-      }
-
-      try {
-        const select = document.querySelector("select.goog-te-combo");
-        if (select) {
-          select.value = langCode;
-          select.dispatchEvent(new Event("change"));
-        }
-      } catch (e) {
-        console.error("Error changing language:", e);
-      }
-
-      // Reload to apply translation
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-    }
-
-    localStorage.setItem("selectedLanguage", langCode);
-    document.documentElement.lang = langCode;
+    changeLanguage(langCode);
     setShowLanguageModal(false);
-
-    // Dispatch a custom event to notify other components
-    window.dispatchEvent(
-      new CustomEvent("languageChange", { detail: langCode })
-    );
   };
 
   const handlePasswordChange = async () => {
@@ -433,46 +327,38 @@ const Settings = () => {
   const handleLogout = () => {
     // Clear all localStorage data
     localStorage.clear();
-    
+
     // Navigate to login page
     navigate("/login");
   };
 
   return (
     <div
-      className={`min-h-screen transition-colors ${
-        darkMode
-          ? "bg-gradient-to-b from-gray-900 to-black text-white"
-          : "bg-gradient-to-b from-gray-50 to-white text-gray-900"
-      }`}
+      className={`min-h-screen transition-colors ${darkMode
+        ? "bg-gradient-to-b from-gray-900 to-black text-white"
+        : "bg-gradient-to-b from-gray-50 to-white text-gray-900"
+        }`}
     >
-      {/* Hidden Google Translate Element */}
-      <div
-        id="google_translate_element_hidden"
-        style={{ display: "none", visibility: "hidden" }}
-      ></div>
-
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
           <h1
-            className={`text-3xl font-bold mb-2 ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-3xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
-            Settings
+            {t("messages.settings_title", "Settings")}
           </h1>
           <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
-            Customize your Ledger Live experience
+            {t("messages.settings_subtitle", "Customize your Ledger Live experience")}
           </p>
         </div>
 
         {/* General Settings */}
-        <SettingSection title="General" darkMode={darkMode}>
+        <SettingSection title={t("messages.general", "General")} darkMode={darkMode}>
           <SettingItem
             icon={darkMode ? Moon : Sun}
-            title="Theme"
-            description={`Currently: ${darkMode ? "Dark Mode" : "Light Mode"}`}
+            title={t("messages.theme", "Theme")}
+            description={`Currently: ${darkMode ? t("messages.theme_dark", "Dark Mode") : t("messages.theme_light", "Light Mode")}`}
             darkMode={darkMode}
           >
             <Toggle
@@ -484,11 +370,8 @@ const Settings = () => {
 
           <SettingItem
             icon={Globe}
-            title="Language"
-            description={`Currently: ${
-              languages.find((l) => l.code === selectedLanguage)?.name ||
-              "English"
-            }`}
+            title={t("messages.language", "Language")}
+            description={`Currently: ${languages.find((l) => l.code === locale)?.name || "English"}`}
             onClick={() => setShowLanguageModal(true)}
             darkMode={darkMode}
           />
@@ -497,9 +380,8 @@ const Settings = () => {
             <SettingItem
               icon={Database}
               title="Display Currency"
-              description={`Currently: ${
-                currencies.find((c) => c.code === selectedCurrency)?.name
-              }`}
+              description={`Currently: ${currencies.find((c) => c.code === selectedCurrency)?.name
+                }`}
               darkMode={darkMode}
             />
           </div>
@@ -519,10 +401,10 @@ const Settings = () => {
         </SettingSection>
 
         {/* Security Settings */}
-        <SettingSection title="Security & Privacy" darkMode={darkMode}>
+        <SettingSection title={t("messages.security", "Security & Privacy")} darkMode={darkMode}>
           <SettingItem
             icon={Lock}
-            title="Change Password"
+            title={t("messages.change_password", "Change Password")}
             description="Update your app password"
             onClick={() => setShowPasswordModal(true)}
             darkMode={darkMode}
@@ -544,7 +426,7 @@ const Settings = () => {
 
           <SettingItem
             icon={LogOut}
-            title="Logout"
+            title={t("messages.logout", "Logout")}
             description="Sign out of your account"
             onClick={handleLogout}
             darkMode={darkMode}
@@ -552,7 +434,7 @@ const Settings = () => {
         </SettingSection>
 
         {/* Updates */}
-        <SettingSection title="Updates & Maintenance" darkMode={darkMode}>
+        <SettingSection title={t("messages.updates", "Updates & Maintenance")} darkMode={darkMode}>
           <SettingItem
             icon={Download}
             title="Automatic Updates"
@@ -569,7 +451,7 @@ const Settings = () => {
           <div>
             <SettingItem
               icon={RefreshCw}
-              title="Check for Updates"
+              title={t("messages.check_updates", "Check for Updates")}
               description="Manually check for app updates"
               onClick={handleCheckForUpdates}
               darkMode={darkMode}
@@ -590,7 +472,7 @@ const Settings = () => {
           <div>
             <SettingItem
               icon={Database}
-              title="Clear Cache"
+              title={t("messages.clear_cache", "Clear Cache")}
               description="Clear temporary files and cached data"
               onClick={handleClearCache}
               darkMode={darkMode}
@@ -611,28 +493,27 @@ const Settings = () => {
 
         {/* App Information */}
         <div
-          className={`p-6 rounded-xl border transition-colors ${
-            darkMode
-              ? "border-gray-800 bg-gray-900/50"
-              : "border-gray-200 bg-white shadow-sm"
-          }`}
+          className={`p-6 rounded-xl border transition-colors ${darkMode
+            ? "border-gray-800 bg-gray-900/50"
+            : "border-gray-200 bg-white shadow-sm"
+            }`}
         >
           <h3
-            className={`text-lg font-semibold mb-4 ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-lg font-semibold mb-4 ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
-            App Information
+            {t("messages.app_info", "App Information")}
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
               <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
-                Version
+                {t("messages.version", "Version")}
               </span>
               <span className={darkMode ? "text-white" : "text-gray-900"}>
                 2.73.1
               </span>
             </div>
+            {/* ... other info ... */}
             <div className="flex justify-between">
               <span className={darkMode ? "text-gray-400" : "text-gray-600"}>
                 Build
@@ -672,9 +553,10 @@ const Settings = () => {
           setNewPassword("");
           setConfirmPassword("");
         }}
-        title="Change Password"
+        title={t("messages.change_password", "Change Password")}
         darkMode={darkMode}
       >
+        {/* ... modal content ... */}
         <div className="space-y-4">
           {passwordError && (
             <div className="flex items-center space-x-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
@@ -692,9 +574,8 @@ const Settings = () => {
 
           <div>
             <label
-              className={`block text-sm font-medium mb-2 ${
-                darkMode ? "text-gray-300" : "text-gray-700"
-              }`}
+              className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
             >
               Current Password
             </label>
@@ -702,20 +583,18 @@ const Settings = () => {
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className={`w-full p-3 rounded-lg border ${
-                darkMode
-                  ? "bg-gray-800 border-gray-700 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
+              className={`w-full p-3 rounded-lg border ${darkMode
+                ? "bg-gray-800 border-gray-700 text-white"
+                : "bg-white border-gray-300 text-gray-900"
+                } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Enter current password"
             />
           </div>
-
+          {/* ... other inputs ... */}
           <div>
             <label
-              className={`block text-sm font-medium mb-2 ${
-                darkMode ? "text-gray-300" : "text-gray-700"
-              }`}
+              className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
             >
               New Password
             </label>
@@ -723,20 +602,18 @@ const Settings = () => {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className={`w-full p-3 rounded-lg border ${
-                darkMode
-                  ? "bg-gray-800 border-gray-700 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
+              className={`w-full p-3 rounded-lg border ${darkMode
+                ? "bg-gray-800 border-gray-700 text-white"
+                : "bg-white border-gray-300 text-gray-900"
+                } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Enter new password"
             />
           </div>
 
           <div>
             <label
-              className={`block text-sm font-medium mb-2 ${
-                darkMode ? "text-gray-300" : "text-gray-700"
-              }`}
+              className={`block text-sm font-medium mb-2 ${darkMode ? "text-gray-300" : "text-gray-700"
+                }`}
             >
               Confirm New Password
             </label>
@@ -744,11 +621,10 @@ const Settings = () => {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full p-3 rounded-lg border ${
-                darkMode
-                  ? "bg-gray-800 border-gray-700 text-white"
-                  : "bg-white border-gray-300 text-gray-900"
-              } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
+              className={`w-full p-3 rounded-lg border ${darkMode
+                ? "bg-gray-800 border-gray-700 text-white"
+                : "bg-white border-gray-300 text-gray-900"
+                } focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500`}
               placeholder="Confirm new password"
             />
           </div>
@@ -766,7 +642,7 @@ const Settings = () => {
                   Changing...
                 </>
               ) : (
-                "Change Password"
+                t("messages.change_password", "Change Password")
               )}
             </Button>
             <Button
@@ -791,7 +667,7 @@ const Settings = () => {
       <Modal
         isOpen={showLanguageModal}
         onClose={() => setShowLanguageModal(false)}
-        title="Select Language"
+        title={t("messages.language", "Select Language")}
         darkMode={darkMode}
       >
         <div className="space-y-3">
@@ -799,16 +675,15 @@ const Settings = () => {
             <button
               key={lang.code}
               onClick={() => handleLanguageChange(lang.code)}
-              className={`w-full p-4 rounded-lg text-left transition-colors flex items-center justify-between ${
-                selectedLanguage === lang.code
-                  ? "bg-cyan-500 text-white"
-                  : darkMode
+              className={`w-full p-4 rounded-lg text-left transition-colors flex items-center justify-between ${locale === lang.code
+                ? "bg-cyan-500 text-white"
+                : darkMode
                   ? "hover:bg-gray-800 text-gray-300 border border-gray-700"
                   : "hover:bg-gray-100 text-gray-900 border border-gray-200"
-              }`}
+                }`}
             >
               <span className="font-medium text-lg">{lang.name}</span>
-              {selectedLanguage === lang.code && <Check className="w-5 h-5" />}
+              {locale === lang.code && <Check className="w-5 h-5" />}
             </button>
           ))}
         </div>

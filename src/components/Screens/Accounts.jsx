@@ -22,7 +22,8 @@ import { useHideBalances } from "./useHideBalances";
 // -------------------------------------------------------------------
 // CONFIG
 // -------------------------------------------------------------------
-const BASE_URL = "https://ledger.arqehayat.com/api";
+import { availableAssets, BASE_URL } from "@/lib/constants";
+import { Check, X } from "lucide-react";
 
 // Simple icon / colour map – you can extend it
 const ICONS = {
@@ -53,9 +54,65 @@ const Accounts = () => {
   const [hideSmall, setHideSmall] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [hideBalances, setHideBalances] = useHideBalances();
-  // -----------------------------------------------------------------
-  // FETCH DATA FROM YOUR /wallet ENDPOINT
-  // -----------------------------------------------------------------
+
+  // Add Wallet Modal State
+  const [showAddWalletModal, setShowAddWalletModal] = useState(false);
+  const [creatingWallet, setCreatingWallet] = useState(false);
+  const [selectedAssetForCreation, setSelectedAssetForCreation] = useState(null);
+  const [newWalletName, setNewWalletName] = useState("");
+  const [step, setStep] = useState(1); // 1: Select Asset, 2: Name Wallet
+
+  const resetModal = () => {
+    setShowAddWalletModal(false);
+    setSelectedAssetForCreation(null);
+    setNewWalletName("");
+    setStep(1);
+    setCreatingWallet(false);
+  };
+
+  const handleAssetSelect = (asset) => {
+    setSelectedAssetForCreation(asset);
+    setNewWalletName(`${asset.coinName} Account`);
+    setStep(2);
+  };
+
+  const handleCreateWallet = async () => {
+    if (!selectedAssetForCreation) return;
+
+    setCreatingWallet(true);
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Authentication token not found");
+
+      const response = await fetch(`${BASE_URL}/wallet/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          wallet_type: selectedAssetForCreation.walletType,
+          name: newWalletName,
+          amount: 0,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create wallet");
+      }
+
+      await fetchData(true);
+      resetModal();
+    } catch (err) {
+      console.error("Error creating wallet:", err);
+      alert(err.message);
+    } finally {
+      setCreatingWallet(false);
+    }
+  };
+
+  const availableToAdd = availableAssets;
   const fetchData = async (isRefresh = false) => {
     try {
       if (isRefresh) setRefreshing(true);
@@ -77,12 +134,13 @@ const Accounts = () => {
 
       if (!json.success) throw new Error(json.message || "Unknown error");
 
-      const parsedTotal = parseFloat(json.total_balance.replace(/,/g, "")) || 0;
+      const parsedTotal = parseFloat(String(json.total_balance || "0").replace(/,/g, "")) || 0;
       const parsedWallets = (json.wallets || []).map((w, i) => ({
         id: i + 1,
         type: w.wallet_type,
+        name: w.name, // Include name
         address: w.wallet_address,
-        balance: parseFloat(w.balance.replace(/,/g, "")) || 0,
+        balance: parseFloat(String(w.balance || "0").replace(/,/g, "")) || 0,
         icon: getIcon(w.wallet_type),
         color: getColor(w.wallet_type),
       }));
@@ -239,7 +297,10 @@ const Accounts = () => {
             <span>Refresh</span>
           </button>
 
-          <Button className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+          <Button
+            onClick={() => setShowAddWalletModal(true)}
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add Wallet
           </Button>
@@ -433,7 +494,10 @@ const Accounts = () => {
                         darkMode ? "text-white" : "text-gray-900"
                       )}
                     >
-                      {formatBalance(w.balance, w.type)}
+                      {w.name || `${w.type} Account`}
+                    </p>
+                    <p className={cn("text-xs", darkMode ? "text-gray-400" : "text-gray-500")}>
+                      {w.type}
                     </p>
                   </td>
 
@@ -512,6 +576,106 @@ const Accounts = () => {
           <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
             No wallets match your criteria.
           </p>
+        </div>
+      )}
+
+      {/* Add Wallet Modal */}
+      {showAddWalletModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div
+            className={cn(
+              "w-full max-w-md rounded-xl border p-6 shadow-xl",
+              darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"
+            )}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className={cn("text-xl font-bold", darkMode ? "text-white" : "text-gray-900")}>
+                {step === 1 ? "Select Asset" : "Name Account"}
+              </h3>
+              <button
+                onClick={resetModal}
+                className={cn("p-2 rounded-lg transition-colors", darkMode ? "hover:bg-gray-800 text-gray-400" : "hover:bg-gray-100 text-gray-600")}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {step === 1 ? (
+              /* STEP 1: SELECT ASSET */
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {availableToAdd.map((asset) => (
+                  <button
+                    key={asset.id}
+                    onClick={() => handleAssetSelect(asset)}
+                    className={cn(
+                      "w-full flex items-center justify-between p-4 rounded-xl border transition-all",
+                      darkMode
+                        ? "border-gray-800 hover:bg-gray-800/50 hover:border-cyan-500/50"
+                        : "border-gray-200 hover:bg-gray-50 hover:border-cyan-500/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-r", asset.color)}>
+                        {asset.coinIcon}
+                      </div>
+                      <div className="text-left">
+                        <p className={cn("font-semibold", darkMode ? "text-white" : "text-gray-900")}>
+                          {asset.coinName}
+                        </p>
+                        <p className={cn("text-sm", darkMode ? "text-gray-400" : "text-gray-500")}>
+                          {asset.walletType}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              /* STEP 2: NAME ACCOUNT */
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-gray-500/30">
+                  <div className={cn("w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg bg-gradient-to-r", selectedAssetForCreation?.color)}>
+                    {selectedAssetForCreation?.coinIcon}
+                  </div>
+                  <div>
+                    <p className={darkMode ? "text-gray-300" : "text-gray-600"}>Adding new account for:</p>
+                    <p className={cn("font-bold text-lg", darkMode ? "text-white" : "text-gray-900")}>{selectedAssetForCreation?.coinName}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={cn("block text-sm font-medium mb-2", darkMode ? "text-gray-300" : "text-gray-700")}>Account Name</label>
+                  <input
+                    type="text"
+                    value={newWalletName}
+                    onChange={(e) => setNewWalletName(e.target.value)}
+                    className={cn(
+                      "w-full p-3 rounded-lg border focus:ring-2 focus:ring-cyan-500 outline-none transition-all",
+                      darkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"
+                    )}
+                    placeholder="e.g. My Savings"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleCreateWallet}
+                    disabled={creatingWallet || !newWalletName.trim()}
+                    className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white"
+                  >
+                    {creatingWallet ? <Loader2 className="animate-spin w-4 h-4" /> : "Create Account"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

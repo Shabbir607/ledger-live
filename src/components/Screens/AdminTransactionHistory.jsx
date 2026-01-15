@@ -17,7 +17,7 @@ import { useDarkMode } from "../DarkModeContext";
 import PortfolioChart from "../ui/PortfolioChart";
 
 const BASE_URL =
-  import.meta.env.VITE_BASE_URL || "https://ledger.arqehayat.com";
+  (import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const AdminTransactionHistory = () => {
   const { darkMode } = useDarkMode();
@@ -84,10 +84,12 @@ const AdminTransactionHistory = () => {
       if (!res.ok) throw new Error("Failed to fetch chart");
 
       const data = await res.json();
-      const formatted = (Array.isArray(data) ? data : []).map((item) => ({
-        date: item.created_at,
-        value: parseFloat(item.balance_after),
-      }));
+      const formatted = (Array.isArray(data) ? data : [])
+        .map((item) => ({
+          date: new Date(item.created_at).toISOString(),
+          value: parseFloat(item.balance_after) || 0,
+        }))
+        .filter(item => !isNaN(new Date(item.date).getTime()));
 
       setChartData(formatted);
     } catch (err) {

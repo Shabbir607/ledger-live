@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useDarkMode } from "../DarkModeContext";
 
 const BASE_URL =
-  import.meta.env.VITE_BASE_URL || "https://ledger.arqehayat.com";
+  (import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 
 const TransactionItem = ({
   type, // 'send' | 'receive'
@@ -133,8 +133,8 @@ const TransactionItem = ({
                 ? "bg-red-500/20 text-red-400"
                 : "bg-red-100 text-red-600"
               : darkMode
-              ? "bg-green-500/20 text-green-400"
-              : "bg-green-100 text-green-600"
+                ? "bg-green-500/20 text-green-400"
+                : "bg-green-100 text-green-600"
           )}
         >
           {isSend ? (
@@ -199,8 +199,8 @@ const TransactionItem = ({
                     ? "text-red-400"
                     : "text-red-600"
                   : darkMode
-                  ? "text-green-400"
-                  : "text-green-600"
+                    ? "text-green-400"
+                    : "text-green-600"
               )}
             >
               {isSend ? "-" : "+"}
@@ -219,23 +219,28 @@ const TransactionItem = ({
           {/* Pending Transaction Actions */}
           {status === "pending" && (
             <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleConfirm}
-                disabled={confirming || canceling}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
-                  darkMode
-                    ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
-                )}
-              >
-                {confirming ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Check className="w-4 h-4" />
-                )}
-                Confirm
-              </button>
+              {/* Only Recipient can confirm */}
+              {!isSend && (
+                <button
+                  onClick={handleConfirm}
+                  disabled={confirming || canceling}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                    darkMode
+                      ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                      : "bg-green-100 text-green-700 hover:bg-green-200"
+                  )}
+                >
+                  {confirming ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4" />
+                  )}
+                  Confirm
+                </button>
+              )}
+
+              {/* Sender or Recipient can Cancel? Usually sender cancels unconfirmed tx. */}
               <button
                 onClick={handleCancel}
                 disabled={confirming || canceling}

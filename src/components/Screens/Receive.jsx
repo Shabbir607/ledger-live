@@ -15,51 +15,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useDarkMode } from "../DarkModeContext";
 
-const BASE_URL =
-  import.meta.env.VITE_BASE_URL || "https://ledger.arqehayat.com";
-
-const availableAssets = [
-  {
-    id: 1,
-    coinName: "Bitcoin",
-    coinSymbol: "BTC",
-    walletType: "BTC",
-    coinIcon: "₿",
-    color: "from-orange-400 to-yellow-500",
-  },
-  {
-    id: 2,
-    coinName: "Ethereum",
-    coinSymbol: "ETH",
-    walletType: "ETH",
-    coinIcon: "Ξ",
-    color: "from-blue-400 to-purple-500",
-  },
-  {
-    id: 3,
-    coinName: "Tether",
-    coinSymbol: "USDT",
-    walletType: "USDT",
-    coinIcon: "₮",
-    color: "from-green-400 to-emerald-500",
-  },
-  {
-    id: 4,
-    coinName: "Binance Coin",
-    coinSymbol: "BNB",
-    walletType: "BNB",
-    coinIcon: "Ƀ",
-    color: "from-yellow-400 to-orange-500",
-  },
-  {
-    id: 5,
-    coinName: "Solana",
-    coinSymbol: "SOL",
-    walletType: "SOL",
-    coinIcon: "◎",
-    color: "from-purple-400 to-pink-500",
-  },
-];
+import { availableAssets, BASE_URL } from "@/lib/constants";
 
 const Receive = () => {
   const { darkMode } = useDarkMode();
@@ -107,7 +63,7 @@ const Receive = () => {
         throw new Error("Authentication token not found. Please log in.");
       }
 
-      const response = await fetch(`${BASE_URL}/api/wallet/create`, {
+      const response = await fetch(`${BASE_URL}/wallet/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -158,7 +114,7 @@ const Receive = () => {
         return;
       }
 
-      const response = await fetch(`${BASE_URL}/api/wallet/balance`, {
+      const response = await fetch(`${BASE_URL}/wallet/balance`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

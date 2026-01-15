@@ -180,8 +180,9 @@ const PortfolioChart = ({
   }, [data, selectedRange]);
 
   const isPositive = change24h >= 0;
+  const safeChange24h = isNaN(change24h) ? 0 : change24h;
   const displayPercent =
-    changePercent ?? (totalValue ? (change24h / totalValue) * 100 : 0);
+    changePercent ?? (totalValue && totalValue > 0 ? (safeChange24h / totalValue) * 100 : 0);
 
   // Compute total from filtered data if not provided
   const computedTotal = useMemo(() => {
@@ -276,23 +277,20 @@ const PortfolioChart = ({
 
       return (
         <div
-          className={`rounded-lg p-3 shadow-lg min-w-[200px] ${
-            darkMode
+          className={`rounded-lg p-3 shadow-lg min-w-[200px] ${darkMode
               ? "bg-gray-800 border border-gray-700"
               : "bg-white border border-gray-200"
-          }`}
+            }`}
         >
           <p
-            className={`text-xs mb-2 ${
-              darkMode ? "text-gray-300" : "text-gray-600"
-            }`}
+            className={`text-xs mb-2 ${darkMode ? "text-gray-300" : "text-gray-600"
+              }`}
           >
             {dateLabel}
           </p>
           <p
-            className={`font-bold text-lg mb-2 ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`font-bold text-lg mb-2 ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             $
             {payload[0].value.toLocaleString(undefined, {
@@ -304,18 +302,16 @@ const PortfolioChart = ({
           {/* Show transaction details if available */}
           {dataPoint.transaction && (
             <div
-              className={`mt-2 pt-2 ${
-                darkMode
+              className={`mt-2 pt-2 ${darkMode
                   ? "border-t border-gray-600"
                   : "border-t border-gray-200"
-              }`}
+                }`}
             >
               <div
-                className={`flex items-center gap-2 text-xs ${
-                  dataPoint.transaction.type === "credit"
+                className={`flex items-center gap-2 text-xs ${dataPoint.transaction.type === "credit"
                     ? "text-green-400"
                     : "text-red-400"
-                }`}
+                  }`}
               >
                 <span className="font-semibold">
                   {dataPoint.transaction.type === "credit" ? "+" : "-"}$
@@ -326,9 +322,8 @@ const PortfolioChart = ({
                 </span>
               </div>
               <p
-                className={`text-xs mt-1 ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                className={`text-xs mt-1 ${darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
               >
                 {dataPoint.transaction.description}
               </p>
@@ -355,17 +350,15 @@ const PortfolioChart = ({
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
           <div>
             <h2
-              className={`text-2xl font-bold mb-2 ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}
+              className={`text-2xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"
+                }`}
             >
               Portfolio Value
             </h2>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <span
-                className={`text-3xl font-bold ${
-                  darkMode ? "text-white" : "text-gray-900"
-                }`}
+                className={`text-3xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+                  }`}
               >
                 $
                 {totalValue.toLocaleString(undefined, {
@@ -377,9 +370,8 @@ const PortfolioChart = ({
           </div>
 
           <div
-            className={`flex space-x-1 rounded-lg p-1 ${
-              darkMode ? "bg-gray-800" : "bg-gray-100"
-            }`}
+            className={`flex space-x-1 rounded-lg p-1 ${darkMode ? "bg-gray-800" : "bg-gray-100"
+              }`}
           >
             {timeRanges.map((range) => (
               <button
@@ -390,8 +382,8 @@ const PortfolioChart = ({
                   selectedRange === range.id
                     ? "bg-cyan-500 text-white"
                     : darkMode
-                    ? "text-gray-400 hover:text-white hover:bg-gray-700"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+                      ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
                 )}
               >
                 {range.label}
@@ -401,21 +393,18 @@ const PortfolioChart = ({
         </div>
 
         <div
-          className={`flex flex-col items-center justify-center h-80 rounded-lg ${
-            darkMode ? "bg-gray-800/30" : "bg-gray-100"
-          }`}
+          className={`flex flex-col items-center justify-center h-80 rounded-lg ${darkMode ? "bg-gray-800/30" : "bg-gray-100"
+            }`}
         >
           <p
-            className={`text-lg ${
-              darkMode ? "text-gray-400" : "text-gray-500"
-            }`}
+            className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-500"
+              }`}
           >
             No transaction data available for this period
           </p>
           <p
-            className={`text-sm mt-2 ${
-              darkMode ? "text-gray-500" : "text-gray-400"
-            }`}
+            className={`text-sm mt-2 ${darkMode ? "text-gray-500" : "text-gray-400"
+              }`}
           >
             Try selecting a different time range
           </p>
@@ -438,17 +427,15 @@ const PortfolioChart = ({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div>
           <h2
-            className={`text-2xl font-bold mb-2 ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
+            className={`text-2xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"
+              }`}
           >
             Portfolio Value
           </h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span
-              className={`text-3xl font-bold ${
-                darkMode ? "text-white" : "text-gray-900"
-              }`}
+              className={`text-3xl font-bold ${darkMode ? "text-white" : "text-gray-900"
+                }`}
             >
               ${computedTotal.toFixed(2)}
             </span>
@@ -464,11 +451,12 @@ const PortfolioChart = ({
                   "font-semibold",
                   isPositive ? "text-green-400" : "text-red-400"
                 )}
-              ></span>
+              >
+                {isPositive ? "+" : ""}{safeChange24h.toFixed(2)}
+              </span>
               <span
-                className={`text-sm ${
-                  darkMode ? "text-gray-400" : "text-gray-500"
-                }`}
+                className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
               >
                 24h
               </span>
@@ -480,9 +468,8 @@ const PortfolioChart = ({
 
         {/* Time-range selector */}
         <div
-          className={`flex space-x-1 rounded-lg p-1 ${
-            darkMode ? "bg-gray-800" : "bg-gray-100"
-          }`}
+          className={`flex space-x-1 rounded-lg p-1 ${darkMode ? "bg-gray-800" : "bg-gray-100"
+            }`}
         >
           {timeRanges.map((range) => (
             <button
@@ -493,8 +480,8 @@ const PortfolioChart = ({
                 selectedRange === range.id
                   ? "bg-cyan-500 text-white"
                   : darkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+                    ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
               )}
             >
               {range.label}
@@ -542,7 +529,11 @@ const PortfolioChart = ({
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => {
+                if (v >= 1000) return `$${(v / 1000).toFixed(1)}k`;
+                if (v >= 1) return `$${v.toFixed(0)}`;
+                return `$${v.toFixed(2)}`;
+              }}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

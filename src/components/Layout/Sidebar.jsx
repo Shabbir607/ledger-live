@@ -9,6 +9,7 @@ import {
   Home,
   Menu,
   History,
+  ArrowDownUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDarkMode } from "../DarkModeContext";
@@ -36,15 +37,16 @@ const Sidebar = ({ activeItem = "portfolio", onItemClick }) => {
     { id: "accounts", label: "Accounts", icon: Wallet },
     { id: "send", label: "Send", icon: Send },
     { id: "receive", label: "Receive", icon: Download },
+    // { id: "swap", label: "Swap", icon: ArrowDownUp },
     { id: "manager", label: "Manager", icon: Package },
     ...(userData?.role === "admin"
       ? [
-          {
-            id: "admin-transactions",
-            label: "History",
-            icon: History,
-          },
-        ]
+        {
+          id: "admin-transactions",
+          label: "History",
+          icon: History,
+        },
+      ]
       : []),
     { id: "settings", label: "Settings", icon: Settings },
   ];
@@ -143,8 +145,8 @@ const Sidebar = ({ activeItem = "portfolio", onItemClick }) => {
                           ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30"
                           : "bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-600 border border-cyan-300"
                         : darkMode
-                        ? "text-gray-400 hover:text-white hover:bg-gray-800/50"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                          ? "text-gray-400 hover:text-white hover:bg-gray-800/50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                     )}
                   >
                     <Icon className="w-5 h-5" />

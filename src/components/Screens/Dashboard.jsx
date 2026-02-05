@@ -1,25 +1,22 @@
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  Plus,
-  RefreshCw,
-  ShoppingCart,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  DollarSign,
-  Repeat,
-  Layers,
-  Sun,
-  Moon,
-} from "lucide-react";
-import PortfolioChart from "../ui/PortfolioChart";
-import AccountCard from "../ui/AccountCard";
-import TransactionItem from "../ui/TransactionItem";
 import { Button } from "@/components/ui/button";
+import {
+    AlertCircle,
+    DollarSign,
+    Layers,
+    RefreshCw,
+    Repeat,
+    ShoppingCart,
+    TrendingDown,
+    TrendingUp
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDarkMode } from "../DarkModeContext";
+import AccountCard from "../ui/AccountCard";
+import PortfolioChart from "../ui/PortfolioChart";
+import TransactionItem from "../ui/TransactionItem";
 import { useHideBalances } from "./useHideBalances";
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "https://server.srv957506.hstgr.cloud/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();

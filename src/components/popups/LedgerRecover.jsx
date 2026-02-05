@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { ArrowLeft, Eye, EyeOff, X } from "lucide-react";
 import { Button, Input, message } from "antd";
+import { ArrowLeft, Eye, EyeOff, X } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const LedgerRecover = () => {
@@ -15,7 +15,7 @@ const LedgerRecover = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/login", {
+      const response = await fetch("https://server.srv957506.hstgr.cloud/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

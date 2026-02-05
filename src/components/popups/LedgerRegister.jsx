@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { ArrowLeft, Eye, EyeOff, X } from "lucide-react";
 import { Button, Input, message } from "antd";
+import { ArrowLeft, Eye, EyeOff, X } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const LedgerRegister = () => {
@@ -13,7 +13,7 @@ const LedgerRegister = () => {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const base_url = "http://127.0.0.1:8000/api";
+  const base_url = "https://server.srv957506.hstgr.cloud/api";
 
   const handleRegister = async () => {
     // Validation

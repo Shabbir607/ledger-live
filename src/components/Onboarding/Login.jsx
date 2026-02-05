@@ -1,18 +1,18 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
+  AlertCircle,
   ArrowRight,
-  Shield,
+  CheckCircle,
   Eye,
   EyeOff,
   Fingerprint,
   Key,
   Lock,
-  AlertCircle,
-  CheckCircle,
+  Shield,
   Smartphone,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -31,12 +31,12 @@ const Login = () => {
     if (loginMethod === "password" && password.length < 6) {
       setAuthError("Password must be at least 6 characters");
       setIsAuthenticating(false);
-      return;
+      return; 
     }
 
     try {
       // Use import.meta.env.VITE_BASE_URL if available, otherwise default
-      const BASE_URL = import.meta.env.VITE_BASE_URL || "http://127.0.0.1:8000/api";
+      const BASE_URL = import.meta.env.VITE_BASE_URL || "https://server.srv957506.hstgr.cloud/api";
 
       // Hardcoded email for now since UI doesn't have email input in this specific design file?
       // Wait, the UI only has Password input in the screenshot/code? 

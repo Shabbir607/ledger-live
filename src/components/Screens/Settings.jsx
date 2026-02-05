@@ -1,31 +1,26 @@
-import React, { useState, useEffect } from "react";
 import {
-  User,
-  Shield,
-  Globe,
-  Bell,
-  Palette,
-  Database,
-  HelpCircle,
-  ChevronRight,
-  Moon,
-  Sun,
-  Lock,
-  Eye,
-  EyeOff,
-  Download,
-  Trash2,
-  RefreshCw,
-  Check,
-  X,
-  LogOut,
+    Check,
+    ChevronRight,
+    Database,
+    Download,
+    Eye,
+    EyeOff,
+    Globe,
+    Lock,
+    LogOut,
+    Moon,
+    RefreshCw,
+    Shield,
+    Sun,
+    X
 } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useHideBalances } from "./useHideBalances";
 import { useTranslation } from "../../contexts/TranslationContext";
 import { useDarkMode } from "../DarkModeContext";
+import { useHideBalances } from "./useHideBalances";
 
-const BASE_URL = "http://127.0.0.1:8000/api";
+const BASE_URL = "https://server.srv957506.hstgr.cloud/api";
 
 const SettingSection = ({ title, children, darkMode }) => (
   <div
